@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["es6"],
+    "allowJs": true,
+    "rootDir": "./",
+    "strict": true,
+    "types": ["node"],
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "moduleResolution": "Node"
+  }
+}
