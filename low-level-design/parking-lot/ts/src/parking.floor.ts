@@ -1,16 +1,16 @@
-import HandicappedSpot from "./parking-spot/handicapped.spot";
 import ParkingSpot from "./parking-spot/parking.spot";
+import { VehicleType } from "./vehicles/vehicle.type";
 
 export default class ParkingFloor {
-  //private id: string;
-  private parkingSpots: Array<ParkingSpot>;
+  private parkingSpots: Map<VehicleType, Array<ParkingSpot>>;
+  private parkingSpotCapacity: number;
+  private parkingFloorID: string;
 
-  constructor(parkingSpotCapacity: number) {
-    this.parkingSpots = new Array<ParkingSpot>(parkingSpotCapacity);
+  constructor(parkingSpotCapacity: number, parkingFloorID: string) {
+    this.parkingSpotCapacity = parkingSpotCapacity;
+    this.parkingSpots = new Map<VehicleType, Array<ParkingSpot>>();
+    this.parkingFloorID = parkingFloorID;
   }
 
-  addValue() {}
+  public addParkingSpot(parkingFloorID: string) {}
 }
-
-const test = new ParkingFloor(4);
-test.addValue();

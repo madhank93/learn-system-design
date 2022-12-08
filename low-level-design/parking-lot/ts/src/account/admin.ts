@@ -1,3 +1,4 @@
+import ParkingFloor from "../parking.floor";
 import Account from "./account";
 
 export default class Admin extends Account {
@@ -5,7 +6,7 @@ export default class Admin extends Account {
     super(username, password);
   }
 
-  public addParkingFloor(): boolean {
+  public addParkingFloor(parkingFloor: ParkingFloor): boolean {
     return false;
   }
 }
