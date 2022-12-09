@@ -8,4 +8,8 @@ export default abstract class Vehicle {
     this.vehicleRegisterNumber = vehicleRegisterNumber;
     this.vehicleType = vehicleType;
   }
+
+  public get getVehicleType() {
+    return this.vehicleType;
+  }
 }

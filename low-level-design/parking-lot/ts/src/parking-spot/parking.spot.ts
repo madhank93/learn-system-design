@@ -26,7 +26,7 @@ export default abstract class ParkingSpot {
     this.isSpotAvailable = false;
   }
 
-  public removeVehicle() {
+  public removeVehicle(vehicle: Vehicle) {
     this.vehicle = null;
     this.isSpotAvailable = true;
   }

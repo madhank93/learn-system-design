@@ -8,4 +8,6 @@ let bmwBike = new Car("TN0001234");
 let bikeSpot: ParkingSpot = new MotorcycleSpot("B1");
 bikeSpot.assignVehicleToSpot(bmwBike);
 
-let firstFloor = new ParkingFloor(5, "F1");
+// let firstFloor = new ParkingFloor(5, "F1");
+
+// firstFloor.addParkingSpot("B1", bikeSpot);
