@@ -1,6 +1,7 @@
 import ParkingSpot from "../parking-spot/parking.spot";
 import { ParkingSpotType } from "../parking-spot/parking.spot.type";
 import ParkingFloor from "../parking.floor";
+import ParkingLot from "../parking.lot";
 import Account from "./account";
 
 export default class Admin extends Account {
@@ -9,13 +10,37 @@ export default class Admin extends Account {
   }
 
   public addParkingFloor(parkingFloor: ParkingFloor): boolean {
+    const floor = ParkingLot.getInstance()
+      .getListOfParkingFloor()
+      .find(
+        (pf) => pf.getParkingFloorID() === parkingFloor.getParkingFloorID()
+      );
+    if (floor === undefined) {
+      ParkingLot.getInstance().getListOfParkingFloor().push(parkingFloor);
+      return true;
+    }
     return false;
   }
 
-  public addParkingSpot(
-    parkingFloorID: string,
-    listOfParkingSpot: Array<ParkingSpot>
-  ) {
-    // this.parkingSpots.set(ParkingSpotType.Compact, listOfParkingSpot);
+  public addParkingSpot(parkingFloorID: string, parkingSpot: ParkingSpot) {
+    const floor = ParkingLot.getInstance()
+      .getListOfParkingFloor()
+      .find((pf) => pf.getParkingFloorID() === parkingFloorID);
+    if (floor === undefined) {
+      throw new Error("Invalid floor");
+    }
+    const spot = floor
+      .getParkingSpots()
+      .get(parkingSpot.getParkingSpotType())
+      ?.find(
+        (spot) => spot.getParkingSpotID() === parkingSpot.getParkingSpotID()
+      );
+    if (spot !== undefined) {
+      return;
+    }
+    floor
+      .getParkingSpots()
+      .get(parkingSpot.getParkingSpotType())
+      ?.push(parkingSpot);
   }
 }

@@ -2,20 +2,28 @@ import { ParkingSpotType } from "./parking.spot.type";
 import Vehicle from "../vehicles/vehicle";
 
 export default abstract class ParkingSpot {
-  private parkingSpotId: string;
+  private parkingSpotID: string;
   private isSpotAvailable: boolean;
   private vehicle: Vehicle | null;
   private parkingSpotType: ParkingSpotType;
 
   constructor(parkingSpotId: string, parkingSpotType: ParkingSpotType) {
     this.isSpotAvailable = true;
-    this.parkingSpotId = parkingSpotId;
+    this.parkingSpotID = parkingSpotId;
     this.vehicle = null;
     this.parkingSpotType = parkingSpotType;
   }
 
   public isSpotFree(): boolean {
     return this.isSpotAvailable;
+  }
+
+  public getParkingSpotType() {
+    return this.parkingSpotType;
+  }
+
+  public getParkingSpotID() {
+    return this.parkingSpotID;
   }
 
   public assignVehicleToSpot(vehicle: Vehicle) {

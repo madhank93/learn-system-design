@@ -1,18 +1,22 @@
 import ParkingSpot from "./parking-spot/parking.spot";
 import { ParkingSpotType } from "./parking-spot/parking.spot.type";
-import Vehicle from "./vehicles/vehicle";
 import { VehicleType } from "./vehicles/vehicle.type";
 
 export default class ParkingFloor {
-  private parkingSpots: Map<ParkingSpotType, Array<ParkingSpot>>;
+  private parkingSpots: Map<ParkingSpotType, Array<ParkingSpot>> = new Map();
   private parkingFloorID: string;
 
-  constructor(
-    parkingFloorID: string,
-    parkingSpots: Map<ParkingSpotType, Array<ParkingSpot>>
-  ) {
-    this.parkingSpots = parkingSpots;
+  constructor(parkingFloorID: string) {
+    this.parkingSpots.set(ParkingSpotType.Compact, new Array<ParkingSpot>());
     this.parkingFloorID = parkingFloorID;
+  }
+
+  public getParkingFloorID() {
+    return this.parkingFloorID;
+  }
+
+  public getParkingSpots() {
+    return this.parkingSpots;
   }
 
   private getSpotTypeForVehicle(vehicleType: VehicleType): ParkingSpotType {
@@ -24,5 +28,9 @@ export default class ParkingFloor {
       default:
         return ParkingSpotType.Large;
     }
+  }
+
+  public canPark(vehicleType: VehicleType) {
+    this.getSpotTypeForVehicle(vehicleType);
   }
 }

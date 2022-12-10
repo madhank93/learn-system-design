@@ -9,7 +9,7 @@ export default abstract class Vehicle {
     this.vehicleType = vehicleType;
   }
 
-  public get getVehicleType() {
+  public getVehicleType() {
     return this.vehicleType;
   }
 }
