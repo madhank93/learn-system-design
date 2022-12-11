@@ -1,5 +1,6 @@
 import { ParkingSpotType } from "./parking.spot.type";
 import Vehicle from "../vehicles/vehicle";
+import SpotOccupiedException from "../errors/spot.occupied.exception";
 
 export default abstract class ParkingSpot {
   private parkingSpotID: string;
@@ -26,9 +27,13 @@ export default abstract class ParkingSpot {
     return this.parkingSpotID;
   }
 
+  public getVehicleDetails() {
+    return this.vehicle;
+  }
+
   public assignVehicleToSpot(vehicle: Vehicle) {
     if (!this.isSpotAvailable) {
-      throw new Error("Spot is unavailable");
+      throw new SpotOccupiedException();
     }
     this.vehicle = vehicle;
     this.isSpotAvailable = false;

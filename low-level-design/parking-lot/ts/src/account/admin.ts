@@ -1,5 +1,4 @@
 import ParkingSpot from "../parking-spot/parking.spot";
-import { ParkingSpotType } from "../parking-spot/parking.spot.type";
 import ParkingFloor from "../parking.floor";
 import ParkingLot from "../parking.lot";
 import Account from "./account";
@@ -26,9 +25,11 @@ export default class Admin extends Account {
     const floor = ParkingLot.getInstance()
       .getListOfParkingFloor()
       .find((pf) => pf.getParkingFloorID() === parkingFloorID);
+
     if (floor === undefined) {
       throw new Error("Invalid floor");
     }
+
     const spot = floor
       .getParkingSpots()
       .get(parkingSpot.getParkingSpotType())
