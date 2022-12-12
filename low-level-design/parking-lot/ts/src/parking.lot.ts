@@ -1,5 +1,5 @@
 import ParkingFloor from "./parking.floor";
-import { VehicleType } from "./vehicles/vehicle.type";
+import Vehicle from "./vehicles/vehicle";
 
 export default class ParkingLot {
   private static instance: ParkingLot;
@@ -16,8 +16,8 @@ export default class ParkingLot {
     return this.instance;
   }
 
-  public getParkingSpot(vehicleType: VehicleType): ParkingFloor | undefined {
-    return this.parkingFloor.find((floor) => floor.canPark(vehicleType));
+  public getParkingSpot(vehicle: Vehicle): ParkingFloor | undefined {
+    return this.parkingFloor.find((floor) => floor.canPark(vehicle));
   }
 
   public getListOfParkingFloor() {

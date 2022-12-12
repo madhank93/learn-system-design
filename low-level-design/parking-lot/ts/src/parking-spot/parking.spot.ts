@@ -37,6 +37,7 @@ export default abstract class ParkingSpot {
     }
     this.vehicle = vehicle;
     this.isSpotAvailable = false;
+    console.log(vehicle, this.isSpotAvailable);
   }
 
   public removeVehicle(vehicle: Vehicle) {

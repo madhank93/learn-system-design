@@ -1,5 +1,6 @@
 import ParkingSpot from "./parking-spot/parking.spot";
 import { ParkingSpotType } from "./parking-spot/parking.spot.type";
+import Vehicle from "./vehicles/vehicle";
 import { VehicleType } from "./vehicles/vehicle.type";
 
 export default class ParkingFloor {
@@ -15,8 +16,14 @@ export default class ParkingFloor {
     return this.parkingFloorID;
   }
 
-  public getParkingSpots() {
+  public getListParkingSpots() {
     return this.parkingSpots;
+  }
+
+  public getAvailableSpot(vehicle: Vehicle) {
+    return this.parkingSpots
+      .get(this.getSpotTypeForVehicle(vehicle.getVehicleType()))
+      ?.find((spot) => spot.isSpotFree());
   }
 
   private getSpotTypeForVehicle(vehicleType: VehicleType): ParkingSpotType {
@@ -30,7 +37,24 @@ export default class ParkingFloor {
     }
   }
 
-  public canPark(vehicleType: VehicleType) {
-    this.getSpotTypeForVehicle(vehicleType);
+  public canPark(vehicle: Vehicle) {
+    const parkingSpotType = this.getSpotTypeForVehicle(
+      vehicle.getVehicleType()
+    );
+
+    if (this.parkingSpots.get(parkingSpotType)?.length) {
+      return true;
+    }
+
+    return false;
+
+    // const freeSpot = this.parkingSpots
+    //   .get(parkingSpotType)
+    //   ?.find((spot) => spot.isSpotFree());
+
+    // if (freeSpot === undefined) {
+    //   throw new Error("Parking spot for this vehicle type is unavailable");
+    // }
+    // return freeSpot;
   }
 }

@@ -31,7 +31,7 @@ export default class Admin extends Account {
     }
 
     const spot = floor
-      .getParkingSpots()
+      .getListParkingSpots()
       .get(parkingSpot.getParkingSpotType())
       ?.find(
         (spot) => spot.getParkingSpotID() === parkingSpot.getParkingSpotID()
@@ -40,7 +40,7 @@ export default class Admin extends Account {
       return;
     }
     floor
-      .getParkingSpots()
+      .getListParkingSpots()
       .get(parkingSpot.getParkingSpotType())
       ?.push(parkingSpot);
   }

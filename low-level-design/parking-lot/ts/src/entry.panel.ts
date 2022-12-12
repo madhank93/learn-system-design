@@ -10,16 +10,28 @@ export default class EntryPanel {
   }
 
   public getParkingTicket(vehicle: Vehicle) {
-    // this.generateParkingTicket(
-    //   vehicle.getVehicleRegisterNumber(),
-    //   parkingSpotID
-    // );
+    const parkingFloor = ParkingLot.getInstance()
+      .getListOfParkingFloor()
+      .find((floor) => floor.canPark(vehicle));
+
+    const spot = parkingFloor?.getAvailableSpot(vehicle);
+
+    if (spot === undefined) return;
+
+    const ticket = this.generateParkingTicket(
+      vehicle.getVehicleRegisterNumber(),
+      spot.getParkingSpotID()
+    );
+
+    console.log("ticket: ", ticket);
   }
 
   private generateParkingTicket(
     vehicleRegisterNumber: string,
     parkingSpotID: string
   ) {
-    // const parkingTicket = new ParkingTicket();
+    return new ParkingTicket(vehicleRegisterNumber, parkingSpotID).setStartTime(
+      Date.now()
+    );
   }
 }
