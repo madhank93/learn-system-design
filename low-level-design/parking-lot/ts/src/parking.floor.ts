@@ -37,6 +37,10 @@ export default class ParkingFloor {
     }
   }
 
+  public getInUseSpotID(vehicleType: VehicleType) {
+    const val = this.parkingSpots;
+  }
+
   public canPark(vehicle: Vehicle) {
     const parkingSpotType = this.getSpotTypeForVehicle(
       vehicle.getVehicleType()

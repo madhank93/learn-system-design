@@ -9,24 +9,6 @@ import ParkingLot from "./src/parking.lot";
 import Car from "./src/vehicles/car";
 import { VehicleType } from "./src/vehicles/vehicle.type";
 
-// let carSpot: ParkingSpot = new CarSpot("B1");
-// carSpot.assignVehicleToSpot(car);
-
-// let parkingLot = ParkingLot.getInstance().getParkingSpot(VehicleType.Car);
-
-// const admin = new Admin("name", "pass");
-
-// const handicapSpot: Map<ParkingSpotType, Array<ParkingSpot>> = new Map<
-//   ParkingSpotType.Compact,
-//   Array<HandicappedSpot>
-// >();
-
-// const pf = new ParkingFloor("Floor1");
-
-// console.log(admin.addParkingFloor(pf));
-
-// console.log(admin.addParkingFloor(pf));
-
 const car = new Car("TN0001234");
 
 const carSpot = new CarSpot("F1-C1");

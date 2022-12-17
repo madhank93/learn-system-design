@@ -22,4 +22,8 @@ export default class ParkingTicket {
     this.endTime = currentDateTime;
     return this;
   }
+
+  public getParkingSpotID() {
+    return this.parkingSpotID;
+  }
 }

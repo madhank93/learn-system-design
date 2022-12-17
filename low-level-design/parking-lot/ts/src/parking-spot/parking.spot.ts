@@ -33,14 +33,14 @@ export default abstract class ParkingSpot {
 
   public assignVehicleToSpot(vehicle: Vehicle) {
     if (!this.isSpotAvailable) {
-      throw new SpotOccupiedException();
+      throw new SpotOccupiedException(vehicle.getVehicleType());
     }
     this.vehicle = vehicle;
     this.isSpotAvailable = false;
     console.log(vehicle, this.isSpotAvailable);
   }
 
-  public removeVehicle(vehicle: Vehicle) {
+  public vacateVehicleFromSpot(vehicle: Vehicle) {
     this.vehicle = null;
     this.isSpotAvailable = true;
   }
