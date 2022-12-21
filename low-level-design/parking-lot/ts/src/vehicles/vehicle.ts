@@ -1,6 +1,6 @@
 import { VehicleType } from "./vehicle.type";
 
-export default abstract class Vehicle {
+export abstract class Vehicle {
   private vehicleRegisterNumber: string;
   private vehicleType: VehicleType;
 

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-export default class ParkingTicket {
+export class ParkingTicket {
   private parkingTicketID: string;
   private vehicleRegisterNumber: string;
   private parkingSpotID: string;

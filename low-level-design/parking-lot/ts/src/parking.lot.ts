@@ -1,7 +1,7 @@
-import ParkingFloor from "./parking.floor";
-import Vehicle from "./vehicles/vehicle";
+import { ParkingFloor } from "./parking.floor";
+import { Vehicle } from "./vehicles/vehicle";
 
-export default class ParkingLot {
+export class ParkingLot {
   private static instance: ParkingLot;
   private parkingFloor: Array<ParkingFloor>;
 

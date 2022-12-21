@@ -1,7 +1,7 @@
-import ParkingSpot from "../parking-spot/parking.spot";
-import ParkingFloor from "../parking.floor";
-import ParkingLot from "../parking.lot";
-import Account from "./account";
+import { ParkingSpot } from "../parking-spot/parking.spot";
+import { ParkingFloor } from "../parking.floor";
+import { ParkingLot } from "../parking.lot";
+import { Account } from "./account";
 
 export default class Admin extends Account {
   constructor(username: string, password: string) {

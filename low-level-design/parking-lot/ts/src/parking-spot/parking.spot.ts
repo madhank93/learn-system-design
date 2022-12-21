@@ -1,8 +1,8 @@
 import { ParkingSpotType } from "./parking.spot.type";
-import Vehicle from "../vehicles/vehicle";
-import SpotOccupiedException from "../errors/spot.occupied.exception";
+import { Vehicle } from "../vehicles/vehicle";
+import { SpotOccupiedException } from "../errors/spot.occupied.exception";
 
-export default abstract class ParkingSpot {
+export abstract class ParkingSpot {
   private parkingSpotID: string;
   private isSpotAvailable: boolean;
   private vehicle: Vehicle | null;

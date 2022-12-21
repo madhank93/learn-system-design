@@ -1,6 +1,6 @@
-import Account from "./account";
+import { Account } from "./account";
 
-export default class ParkingAttendant extends Account {
+export class ParkingAttendant extends Account {
   constructor(username: string, password: string) {
     super(username, password);
   }

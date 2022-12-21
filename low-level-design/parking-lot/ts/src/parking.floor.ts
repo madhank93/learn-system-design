@@ -1,9 +1,9 @@
-import ParkingSpot from "./parking-spot/parking.spot";
+import { ParkingSpot } from "./parking-spot/parking.spot";
 import { ParkingSpotType } from "./parking-spot/parking.spot.type";
-import Vehicle from "./vehicles/vehicle";
+import { Vehicle } from "./vehicles/vehicle";
 import { VehicleType } from "./vehicles/vehicle.type";
 
-export default class ParkingFloor {
+export class ParkingFloor {
   private parkingSpots: Map<ParkingSpotType, Array<ParkingSpot>> = new Map();
   private parkingFloorID: string;
 
