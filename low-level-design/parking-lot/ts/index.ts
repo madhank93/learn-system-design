@@ -1,5 +1,6 @@
 import Admin from "./src/account/admin";
 import EntryPanel from "./src/entry.panel";
+import ExitPanel from "./src/exit.panel";
 import CarSpot from "./src/parking-spot/car.spot";
 import HandicappedSpot from "./src/parking-spot/handicapped.spot";
 import ParkingSpot from "./src/parking-spot/parking.spot";
@@ -17,10 +18,12 @@ const floor1 = new ParkingFloor("Floor 1");
 
 const admin = new Admin("name", "pass");
 
-console.log(admin.addParkingFloor(floor1));
-console.log(admin.addParkingSpot("Floor 1", carSpot));
+admin.addParkingFloor(floor1);
+admin.addParkingSpot("Floor 1", carSpot);
 //carSpot.assignVehicleToSpot(car);
 
 const northEntrance = new EntryPanel("North");
+const exitPanel = new ExitPanel();
 
-northEntrance.getParkingTicket(car);
+const carParkingTicket = northEntrance.getParkingTicket(car);
+exitPanel.checkout(carParkingTicket);

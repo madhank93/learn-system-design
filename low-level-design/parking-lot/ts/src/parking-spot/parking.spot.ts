@@ -37,10 +37,10 @@ export default abstract class ParkingSpot {
     }
     this.vehicle = vehicle;
     this.isSpotAvailable = false;
-    console.log(vehicle, this.isSpotAvailable);
+    // console.log(vehicle, this.isSpotAvailable);
   }
 
-  public vacateVehicleFromSpot(vehicle: Vehicle) {
+  public vacateVehicleFromSpot() {
     this.vehicle = null;
     this.isSpotAvailable = true;
   }

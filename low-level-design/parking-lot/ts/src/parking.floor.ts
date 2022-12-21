@@ -9,6 +9,9 @@ export default class ParkingFloor {
 
   constructor(parkingFloorID: string) {
     this.parkingSpots.set(ParkingSpotType.Compact, new Array<ParkingSpot>());
+    this.parkingSpots.set(ParkingSpotType.Motorcycle, new Array<ParkingSpot>());
+    this.parkingSpots.set(ParkingSpotType.Large, new Array<ParkingSpot>());
+    this.parkingSpots.set(ParkingSpotType.Electric, new Array<ParkingSpot>());
     this.parkingFloorID = parkingFloorID;
   }
 
@@ -16,7 +19,7 @@ export default class ParkingFloor {
     return this.parkingFloorID;
   }
 
-  public getListParkingSpots() {
+  public getListOfParkingSpots() {
     return this.parkingSpots;
   }
 
@@ -38,7 +41,10 @@ export default class ParkingFloor {
   }
 
   public getInUseSpotID(vehicleType: VehicleType) {
-    const val = this.parkingSpots;
+    return this.parkingSpots
+      .get(this.getSpotTypeForVehicle(vehicleType))
+      ?.filter((spot) => !spot.isSpotFree)
+      .map((occSpot) => occSpot);
   }
 
   public canPark(vehicle: Vehicle) {

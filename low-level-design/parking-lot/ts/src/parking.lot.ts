@@ -16,8 +16,18 @@ export default class ParkingLot {
     return this.instance;
   }
 
-  public getParkingSpot(vehicle: Vehicle): ParkingFloor | undefined {
-    return this.parkingFloor.find((floor) => floor.canPark(vehicle));
+  public vacateParkingSpot(parkingSpotID: string) {
+    for (let floor of this.parkingFloor) {
+      for (let spots of floor.getListOfParkingSpots().values()) {
+        spots.find((spot) => {
+          if (spot.getParkingSpotID() === parkingSpotID) {
+            console.log(spot);
+            spot.vacateVehicleFromSpot();
+            console.log(spot);
+          }
+        });
+      }
+    }
   }
 
   public getListOfParkingFloor() {

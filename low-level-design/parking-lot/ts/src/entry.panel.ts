@@ -15,7 +15,13 @@ export default class EntryPanel {
       .getListOfParkingFloor()
       .find((floor) => floor.canPark(vehicle));
 
-    const spot = parkingFloor?.getAvailableSpot(vehicle);
+    if (parkingFloor === undefined) {
+      throw new Error(
+        `Parking is unsupported for this ${vehicle.getVehicleType()} type`
+      );
+    }
+
+    const spot = parkingFloor.getAvailableSpot(vehicle);
 
     if (spot === undefined) {
       throw new SpotOccupiedException(vehicle.getVehicleType());
@@ -23,18 +29,25 @@ export default class EntryPanel {
 
     const ticket = this.generateParkingTicket(
       vehicle.getVehicleRegisterNumber(),
+      parkingFloor.getParkingFloorID(),
       spot.getParkingSpotID()
     );
 
+    spot.assignVehicleToSpot(vehicle);
+
     console.log("ticket: ", ticket);
+    return ticket;
   }
 
   private generateParkingTicket(
     vehicleRegisterNumber: string,
+    parkingFloorID: string,
     parkingSpotID: string
   ) {
-    return new ParkingTicket(vehicleRegisterNumber, parkingSpotID).setStartTime(
-      Date.now()
-    );
+    return new ParkingTicket(
+      vehicleRegisterNumber,
+      parkingFloorID,
+      parkingSpotID
+    ).setStartTime(Date.now());
   }
 }
