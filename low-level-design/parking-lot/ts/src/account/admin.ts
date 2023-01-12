@@ -44,4 +44,8 @@ export default class Admin extends Account {
       .get(parkingSpot.getParkingSpotType())
       ?.push(parkingSpot);
   }
+
+  public addEntrancePanel() {}
+
+  public addExitPanel() {}
 }

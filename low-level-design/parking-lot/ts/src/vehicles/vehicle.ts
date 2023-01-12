@@ -1,19 +1,19 @@
 import { VehicleType } from "./vehicle.type";
 
 export abstract class Vehicle {
-  private vehicleRegisterNumber: string;
-  private vehicleType: VehicleType;
+  private registerNumber: string;
+  private type: VehicleType;
 
   constructor(vehicleRegisterNumber: string, vehicleType: VehicleType) {
-    this.vehicleRegisterNumber = vehicleRegisterNumber;
-    this.vehicleType = vehicleType;
+    this.registerNumber = vehicleRegisterNumber;
+    this.type = vehicleType;
   }
 
   public getVehicleType() {
-    return this.vehicleType;
+    return this.type;
   }
 
   public getVehicleRegisterNumber() {
-    return this.vehicleRegisterNumber;
+    return this.registerNumber;
   }
 }

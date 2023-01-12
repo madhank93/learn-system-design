@@ -1,3 +1,4 @@
+import { DisplayBoard } from "./parking.display.board";
 import { ParkingSpot } from "./parking-spot/parking.spot";
 import { ParkingSpotType } from "./parking-spot/parking.spot.type";
 import { Vehicle } from "./vehicles/vehicle";
@@ -6,13 +7,18 @@ import { VehicleType } from "./vehicles/vehicle.type";
 export class ParkingFloor {
   private parkingSpots: Map<ParkingSpotType, Array<ParkingSpot>> = new Map();
   private parkingFloorID: string;
+  private displayBoard: DisplayBoard;
 
   constructor(parkingFloorID: string) {
     this.parkingSpots.set(ParkingSpotType.Compact, new Array<ParkingSpot>());
     this.parkingSpots.set(ParkingSpotType.Motorcycle, new Array<ParkingSpot>());
     this.parkingSpots.set(ParkingSpotType.Large, new Array<ParkingSpot>());
-    this.parkingSpots.set(ParkingSpotType.Electric, new Array<ParkingSpot>());
+    this.parkingSpots.set(
+      ParkingSpotType.ElectricCar,
+      new Array<ParkingSpot>()
+    );
     this.parkingFloorID = parkingFloorID;
+    this.displayBoard = new DisplayBoard();
   }
 
   public getParkingFloorID() {
@@ -27,6 +33,15 @@ export class ParkingFloor {
     return this.parkingSpots
       .get(this.getSpotTypeForVehicle(vehicle.getVehicleType()))
       ?.find((spot) => spot.isSpotFree());
+  }
+
+  public showDisplayBoard() {
+    for (let spotType of this.parkingSpots.keys()) {
+      const freeSpots =
+        this.parkingSpots.get(spotType)?.filter((spot) => spot.isSpotFree()) ??
+        [];
+      this.displayBoard.displayMessage(spotType, freeSpots.length);
+    }
   }
 
   private getSpotTypeForVehicle(vehicleType: VehicleType): ParkingSpotType {

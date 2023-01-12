@@ -1,4 +1,3 @@
-import { SpotOccupiedException } from "./errors/spot.occupied.exception";
 import { ParkingLot } from "./parking.lot";
 import { ParkingTicket } from "./parking.ticket";
 import { Vehicle } from "./vehicles/vehicle";
@@ -24,11 +23,11 @@ export class EntryPanel {
     const spot = parkingFloor.getAvailableSpot(vehicle);
 
     if (spot === undefined) {
-      throw new SpotOccupiedException(vehicle.getVehicleType());
+      throw new Error(`No spots are available for ${vehicle.getVehicleType()}`);
     }
 
     const ticket = this.generateParkingTicket(
-      vehicle.getVehicleRegisterNumber(),
+      vehicle,
       parkingFloor.getParkingFloorID(),
       spot.getParkingSpotID()
     );
@@ -40,14 +39,15 @@ export class EntryPanel {
   }
 
   private generateParkingTicket(
-    vehicleRegisterNumber: string,
+    vehicle: Vehicle,
     parkingFloorID: string,
     parkingSpotID: string
   ) {
     return new ParkingTicket(
-      vehicleRegisterNumber,
+      vehicle.getVehicleType(),
+      vehicle.getVehicleRegisterNumber(),
       parkingFloorID,
       parkingSpotID
-    ).setStartTime(Date.now());
+    ).setStartTime();
   }
 }
