@@ -62,7 +62,7 @@ describe("Parking spots test cases", () => {
     expect(bikeSpot.isSpotFree()).toEqual(true);
   });
 
-  it("Verify able to park vehicle on the occupied spot", () => {
+  it("Verify whether its able to park vehicle on the occupied spot", () => {
     const car = new Car("TN12345");
     carSpot.assignVehicleToSpot(car);
 
