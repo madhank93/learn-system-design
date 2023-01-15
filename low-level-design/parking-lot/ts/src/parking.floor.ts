@@ -72,14 +72,5 @@ export class ParkingFloor {
     }
 
     return false;
-
-    // const freeSpot = this.parkingSpots
-    //   .get(parkingSpotType)
-    //   ?.find((spot) => spot.isSpotFree());
-
-    // if (freeSpot === undefined) {
-    //   throw new Error("Parking spot for this vehicle type is unavailable");
-    // }
-    // return freeSpot;
   }
 }

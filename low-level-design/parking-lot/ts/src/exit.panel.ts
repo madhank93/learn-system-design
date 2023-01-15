@@ -20,6 +20,7 @@ export class ExitPanel {
 
     parkingTicket.setAmount(totalAmount);
     console.log(parkingTicket);
+    return parkingTicket;
   }
 
   private calculatePrice(parkingSpotType: ParkingSpotType, duration: number) {
