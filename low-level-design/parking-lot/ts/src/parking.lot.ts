@@ -1,7 +1,6 @@
 import { EntryPanel } from "./entry.panel";
 import { ExitPanel } from "./exit.panel";
 import { ParkingFloor } from "./parking.floor";
-import { Vehicle } from "./vehicles/vehicle";
 
 export class ParkingLot {
   private static instance: ParkingLot;
@@ -31,7 +30,6 @@ export class ParkingLot {
             return spot;
           }
         });
-        console.log("Vacated spot &&&&&&&&&", vacatedSpot);
         return vacatedSpot;
       }
     }
@@ -39,5 +37,13 @@ export class ParkingLot {
 
   public getListOfParkingFloor() {
     return this.parkingFloor;
+  }
+
+  public getListOfEntryPanel() {
+    return this.entryPanels;
+  }
+
+  public getListOfExitPanel() {
+    return this.exitPanels;
   }
 }

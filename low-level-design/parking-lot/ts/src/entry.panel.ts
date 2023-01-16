@@ -9,6 +9,10 @@ export class EntryPanel {
     this.entryPanelID = entryPanelID;
   }
 
+  public getEntryPanelID() {
+    return this.entryPanelID;
+  }
+
   public getParkingTicket(vehicle: Vehicle) {
     const parkingFloor = ParkingLot.getInstance()
       .getListOfParkingFloor()
@@ -21,7 +25,6 @@ export class EntryPanel {
     }
 
     const spot = parkingFloor.getAvailableSpot(vehicle);
-
     if (spot === undefined) {
       throw new Error(`No spots are available for ${vehicle.getVehicleType()}`);
     }
@@ -33,8 +36,6 @@ export class EntryPanel {
     );
 
     spot.assignVehicleToSpot(vehicle);
-
-    console.log("ticket: ", ticket);
     return ticket;
   }
 

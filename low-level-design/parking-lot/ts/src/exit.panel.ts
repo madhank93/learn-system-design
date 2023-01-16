@@ -3,9 +3,19 @@ import { ParkingSpotType } from "./parking-spot/parking.spot.type";
 import { ParkingLot } from "./parking.lot";
 import { ParkingTicket } from "./parking.ticket";
 export class ExitPanel {
+  private exitPanelID: string;
+
+  constructor(entryPanelID: string) {
+    this.exitPanelID = entryPanelID;
+  }
+
+  public getExitPanelID() {
+    return this.exitPanelID;
+  }
+
   public checkout(parkingTicket: ParkingTicket) {
     const parkingSpotID = parkingTicket.getParkingSpotID();
-    const totalDurationInHours = this.calculateDuration(parkingTicket);
+    const totalDurationInHours = this.calculateDurationInHours(parkingTicket);
     const vacatedSpot =
       ParkingLot.getInstance().vacateParkingSpot(parkingSpotID);
 
@@ -19,15 +29,15 @@ export class ExitPanel {
     );
 
     parkingTicket.setAmount(totalAmount);
-    console.log(parkingTicket);
     return parkingTicket;
   }
 
   private calculatePrice(parkingSpotType: ParkingSpotType, duration: number) {
-    return duration * new HourlyCost().getCost(parkingSpotType);
+    const cost = new HourlyCost().getCost(parkingSpotType);
+    return duration === 0 ? 1 * cost : duration * cost;
   }
 
-  private calculateDuration(parkingTicket: ParkingTicket) {
+  private calculateDurationInHours(parkingTicket: ParkingTicket) {
     const endTime = parkingTicket.setEndTime().getEndTime();
     return Math.round(
       Math.abs(parkingTicket.getStartTime().valueOf() - endTime.valueOf()) /

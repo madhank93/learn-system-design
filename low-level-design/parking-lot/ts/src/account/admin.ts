@@ -1,3 +1,5 @@
+import { EntryPanel } from "../entry.panel";
+import { ExitPanel } from "../exit.panel";
 import { ParkingSpot } from "../parking-spot/parking.spot";
 import { ParkingFloor } from "../parking.floor";
 import { ParkingLot } from "../parking.lot";
@@ -45,7 +47,29 @@ export default class Admin extends Account {
       ?.push(parkingSpot);
   }
 
-  public addEntrancePanel() {}
+  public addEntrancePanel(entryPanel: EntryPanel) {
+    const listOfEntryPanel = ParkingLot.getInstance().getListOfEntryPanel();
+    const result = listOfEntryPanel.find(
+      (panel) => panel.getEntryPanelID() === entryPanel.getEntryPanelID()
+    );
 
-  public addExitPanel() {}
+    if (result === undefined) {
+      listOfEntryPanel.push(entryPanel);
+      return true;
+    }
+    return false;
+  }
+
+  public addExitPanel(exitPanel: ExitPanel) {
+    const listOfExistPanel = ParkingLot.getInstance().getListOfExitPanel();
+    const result = listOfExistPanel.find(
+      (panel) => panel.getExitPanelID() === exitPanel.getExitPanelID()
+    );
+
+    if (result === undefined) {
+      listOfExistPanel.push(exitPanel);
+      return true;
+    }
+    return false;
+  }
 }

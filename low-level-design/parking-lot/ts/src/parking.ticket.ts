@@ -37,6 +37,10 @@ export class ParkingTicket {
     return this.endTime;
   }
 
+  public getAmount() {
+    return this.amount;
+  }
+
   public setEndTime(currentDateTime: Date = new Date()) {
     this.endTime = currentDateTime;
     return this;
