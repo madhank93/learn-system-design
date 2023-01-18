@@ -15,8 +15,10 @@ const parkingLot = ParkingLot.getInstance();
 const admin = new Admin("Jack", "Pass12345");
 
 // Adding Parking floors
-admin.addParkingFloor(new ParkingFloor("PF1001"));
-admin.addParkingFloor(new ParkingFloor("PF1002"));
+const parkingFloor1 = new ParkingFloor("PF1001");
+const parkingFloor2 = new ParkingFloor("PF1002");
+admin.addParkingFloor(parkingFloor1);
+admin.addParkingFloor(parkingFloor2);
 
 // Adding Entry panels
 const entryPanel1 = new EntryPanel("ENT001");
@@ -49,6 +51,9 @@ admin.addParkingSpot(firstFloorID!, bikeParkingSpot2);
 const car1 = new Car("TN23890");
 const car2 = new Car("TN99234");
 const bike = new MotorCycle("TN34909");
+
+// Call the display board
+parkingFloor1.showDisplayBoard();
 
 // Park the vehicle
 let ticketForCar1 = entryPanel1.getParkingTicket(car1);

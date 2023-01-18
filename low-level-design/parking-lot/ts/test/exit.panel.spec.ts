@@ -33,9 +33,9 @@ describe("Exit panel tests cases", () => {
       ?.push(carSpot);
     let ticket = entryPanel.getParkingTicket(car);
 
-    vi.advanceTimersByTime(3600000);
+    vi.advanceTimersByTime(7200000);
     ticket = exitPanel.checkout(ticket);
 
-    expect(ticket.getAmount()).toEqual(25);
+    expect(ticket.getAmount()).toEqual(50);
   });
 });
