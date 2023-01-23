@@ -27,11 +27,7 @@ classDiagram
     Vehicle <|-- ElectricCar: Extends
     Vehicle <|-- Motorbike: Extends
     ParkingSpot --> Vehicle: has
-```
-
-```mermaid
-classDiagram
-    class ParkingFloor {
+        class ParkingFloor {
         -parkingSpots: Map~ParkingSpotType, Array~ParkingSpot~~
         -parkingFloorID: string
         -displayBoard: DisplayBoard
@@ -47,11 +43,7 @@ classDiagram
     }
     ParkingFloor *-- DisplayBoard
     ParkingFloor *-- ParkingSpot
-```
-
-```mermaid
-classDiagram
-    class ParkingLot {
+        class ParkingLot {
         -instance: ParkingLot
         -parkingFloor: Array~ParkingFloor~
         -entryPanels: Array~EntryPanel~
@@ -106,4 +98,21 @@ classDiagram
     ExitPanel *-- ParkingTicket
     ExitPanel  *-- Payment
     ExitPanel --> HourlyCost: has
+
+    class ParkingSpotType{
+        <<enumeration>>
+        Disabled
+        Compact
+        Large
+        Motorcycle
+        ElectricCar
+    }
+    class VehicleType{
+        <<enumeration>>
+        Car
+        Motorcycle
+        Truck
+        ElectricCar
+        Van
+    }
 ```
