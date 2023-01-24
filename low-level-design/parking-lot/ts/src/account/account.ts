@@ -1,4 +1,4 @@
-export default abstract class Account {
+export abstract class Account {
   private username: string;
   private password: string;
 

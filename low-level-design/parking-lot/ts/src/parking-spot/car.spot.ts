@@ -1,8 +1,8 @@
 import { ParkingSpot } from "./parking.spot";
 import { ParkingSpotType } from "./parking.spot.type";
 
-export class MotorcycleSpot extends ParkingSpot {
+export class CarSpot extends ParkingSpot {
   constructor(id: string) {
-    super(id, ParkingSpotType.Motorcycle);
+    super(id, ParkingSpotType.Compact);
   }
 }

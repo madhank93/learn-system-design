@@ -1,7 +1,7 @@
 export enum ParkingSpotType {
-  Handicapped,
-  Compact,
-  Large,
-  Motorcycle,
-  Electric,
+  Disabled = "Disabled",
+  Compact = "Compact",
+  Large = "Large",
+  Motorcycle = "Motorcycle",
+  ElectricCar = "ElectricCar",
 }

@@ -1,32 +1,44 @@
 import { ParkingSpotType } from "./parking.spot.type";
-import Vehicle from "../vehicles/vehicle";
+import { Vehicle } from "../vehicles/vehicle";
 
-export default abstract class ParkingSpot {
-  private id: string;
+export abstract class ParkingSpot {
+  private parkingSpotID: string;
   private isSpotAvailable: boolean;
   private vehicle: Vehicle | null;
   private parkingSpotType: ParkingSpotType;
 
-  constructor(id: string, parkingSpotType: ParkingSpotType) {
-    this.id = id;
+  constructor(parkingSpotId: string, parkingSpotType: ParkingSpotType) {
     this.isSpotAvailable = true;
+    this.parkingSpotID = parkingSpotId;
     this.vehicle = null;
     this.parkingSpotType = parkingSpotType;
   }
 
-  public isFree(): boolean {
-    return false;
+  public isSpotFree(): boolean {
+    return this.isSpotAvailable;
   }
 
-  public assignVehicle(vehicle: Vehicle) {
+  public getParkingSpotType() {
+    return this.parkingSpotType;
+  }
+
+  public getParkingSpotID() {
+    return this.parkingSpotID;
+  }
+
+  public getVehicleDetails() {
+    return this.vehicle;
+  }
+
+  public assignVehicleToSpot(vehicle: Vehicle) {
     if (!this.isSpotAvailable) {
-      throw new Error("Spot is unavailable");
+      throw new Error(`No spots are available for ${vehicle.getVehicleType()}`);
     }
     this.vehicle = vehicle;
     this.isSpotAvailable = false;
   }
 
-  public removeVehicle() {
+  public vacateVehicleFromSpot() {
     this.vehicle = null;
     this.isSpotAvailable = true;
   }
