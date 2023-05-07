@@ -1,0 +1,2 @@
+- https://github.com/vald-phoenix/the-osi-model
+- http://web.mit.edu/modiano/www/6.263/Lecture1.pdf
