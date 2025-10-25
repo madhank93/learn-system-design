@@ -1,0 +1,145 @@
+# services:
+#   server1:
+#     build: ./server
+#     environment:
+#       - SERVER_ID=1
+#       - REGION=us
+#     networks:
+#       - lbnet
+#     restart: "unless-stopped"
+
+#   server2:
+#     build: ./server
+#     environment:
+#       - SERVER_ID=2
+#       - REGION=eu
+#     networks:
+#       - lbnet
+#     restart: "unless-stopped"
+
+
+#   server3:
+#     build: ./server
+#     environment:
+#       - SERVER_ID=3
+#       - REGION=global
+#     networks:
+#       - lbnet
+#     restart: "unless-stopped"
+
+#   nginx-round-robin:
+#     build: ./nginx
+#     # Mount unique config file (absolute path to avoid creation of directories)
+#     volumes:
+#       - ${PWD}/nginx/round_robin.conf:/etc/nginx/conf.d/default.conf:ro
+#     ports:
+#       - "8081:80"
+#     depends_on:
+#       - server1
+#       - server2
+#       - server3
+#     networks:
+#       - lbnet
+
+#   nginx-least-conn:
+#     build: ./nginx
+#     volumes:
+#       - ${PWD}/nginx/least_conn.conf:/etc/nginx/conf.d/default.conf:ro
+#     ports:
+#       - "8082:80"
+#     depends_on:
+#       - server1
+#       - server2
+#       - server3
+#     networks:
+#       - lbnet
+
+#   nginx-geo-env:
+#     build: ./nginx
+#     volumes:
+#       - ${PWD}/nginx/geo_env_based.conf:/etc/nginx/conf.d/default.conf:ro
+#     ports:
+#       - "8083:80"
+#     depends_on:
+#       - server1
+#       - server2
+#       - server3
+#     networks:
+#       - lbnet
+
+# networks:
+#   lbnet:
+#     driver: bridge
+
+services:
+  server1:
+    build: ./server
+    environment:
+      - SERVER_ID=1
+      - REGION=us
+    networks:
+      - lbnet
+
+  server2:
+    build: ./server
+    environment:
+      - SERVER_ID=2
+      - REGION=eu
+    networks:
+      - lbnet
+
+  server3:
+    build: ./server
+    environment:
+      - SERVER_ID=3
+      - REGION=global
+    networks:
+      - lbnet
+
+  # Round Robin
+  nginx-round-robin:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/round_robin.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8081:80"
+    depends_on: [server1, server2, server3]
+    networks:
+      - lbnet
+
+  # Least Connections
+  nginx-least-conn:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/least_conn.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8082:80"
+    depends_on: [server1, server2, server3]
+    networks:
+      - lbnet
+
+  # Geo-based
+  nginx-geo-env:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/geo_env_based.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8083:80"
+    depends_on: [server1, server2, server3]
+    networks:
+      - lbnet
+
+  # Consistent Hashing
+  nginx-consistent-hash:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/consistent_hashing.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8084:80"
+    depends_on: [server1, server2, server3]
+    networks:
+      - lbnet
+
+networks:
+  lbnet:
+    driver: bridge
