@@ -1,0 +1,39 @@
+# Reusable commands
+docker-clean:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  docker system prune -af --volumes
+  docker builder prune -af
+
+compose-down dir:
+    @echo "Stopping containers in {{dir}}..."
+    cd {{dir}} && docker compose down --rmi all --volumes --remove-orphans
+
+compose-up dir:
+    @echo "Starting containers in {{dir}}..."
+    cd {{dir}} && docker compose up --force-recreate --build -d
+
+##########################
+### 02 - Load balancer ###
+##########################
+
+# Set the load balancer directory
+lb_dir := "02_load_balancer"
+
+load_balancer_up:
+    @just compose-down {{lb_dir}}
+    @just docker-clean
+    @just compose-up {{lb_dir}}
+    @echo ""
+    @echo "Load balancer is running"
+
+load_balancer_test:
+    @echo ""
+    @echo "Running load balancer tests..."
+    @bash {{lb_dir}}/test.sh
+
+load_balancer_down:
+    @just compose-down {{lb_dir}}
+    @just docker-clean
+    @echo ""
+    @echo "Load balancer stopped and cleaned"
