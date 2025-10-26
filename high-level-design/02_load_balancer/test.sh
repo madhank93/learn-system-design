@@ -17,7 +17,6 @@ echo ""
 echo "📍 TEST 2: Least Connections (port 8082)"
 echo "seq 1 100 | xargs -n1 -P20 curl -s localhost:8082"
 echo "-------------------------------------------"
-# for i in {1..6}; do curl -s localhost:8082; done
 seq 1 100 | xargs -n1 -P20 curl -s localhost:8082
 echo ""
 read -p "Press Enter to continue..."
