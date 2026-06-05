@@ -1,0 +1,5 @@
+go 1.25.1
+
+use ./low-level-design/parking-lot/go
+
+use ./high-level-design/02_load_balancer/server
