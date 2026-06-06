@@ -1,0 +1,25 @@
+services:
+  redis:
+    image: redis:7-alpine
+    networks:
+      - cqrsnet
+
+  writer:
+    build: ./writer
+    ports:
+      - "8081:8080"
+    depends_on: [redis]
+    networks:
+      - cqrsnet
+
+  reader:
+    build: ./reader
+    ports:
+      - "8082:8080"
+    depends_on: [redis]
+    networks:
+      - cqrsnet
+
+networks:
+  cqrsnet:
+    driver: bridge

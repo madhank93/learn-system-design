@@ -1,0 +1,50 @@
+services:
+  # CP node pair — consistency over availability
+  node-cp-1:
+    build: ./node
+    environment:
+      - NODE_ID=cp-1
+      - MODE=cp
+      - PEER_ADDR=node-cp-2:8080
+    ports:
+      - "8081:8080"
+    networks:
+      - capnet
+
+  node-cp-2:
+    build: ./node
+    environment:
+      - NODE_ID=cp-2
+      - MODE=cp
+      - PEER_ADDR=node-cp-1:8080
+    ports:
+      - "8082:8080"
+    networks:
+      - capnet
+
+  # AP node pair — availability over consistency
+  node-ap-1:
+    build: ./node
+    environment:
+      - NODE_ID=ap-1
+      - MODE=ap
+      - PEER_ADDR=node-ap-2:8080
+    ports:
+      - "8083:8080"
+    networks:
+      - capnet
+
+  node-ap-2:
+    build: ./node
+    environment:
+      - NODE_ID=ap-2
+      - MODE=ap
+      - PEER_ADDR=node-ap-1:8080
+    ports:
+      - "8084:8080"
+    networks:
+      - capnet
+
+networks:
+  capnet:
+    driver: bridge

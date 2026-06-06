@@ -13,10 +13,8 @@ export class ParkingFloor {
     this.parkingSpots.set(ParkingSpotType.Compact, new Array<ParkingSpot>());
     this.parkingSpots.set(ParkingSpotType.Motorcycle, new Array<ParkingSpot>());
     this.parkingSpots.set(ParkingSpotType.Large, new Array<ParkingSpot>());
-    this.parkingSpots.set(
-      ParkingSpotType.ElectricCar,
-      new Array<ParkingSpot>()
-    );
+    this.parkingSpots.set(ParkingSpotType.ElectricCar, new Array<ParkingSpot>());
+    this.parkingSpots.set(ParkingSpotType.Disabled, new Array<ParkingSpot>());
     this.parkingFloorID = parkingFloorID;
     this.displayBoard = new DisplayBoard();
   }
@@ -58,19 +56,13 @@ export class ParkingFloor {
   public getInUseSpotID(vehicleType: VehicleType) {
     return this.parkingSpots
       .get(this.getSpotTypeForVehicle(vehicleType))
-      ?.filter((spot) => !spot.isSpotFree)
-      .map((occSpot) => occSpot);
+      ?.filter((spot) => !spot.isSpotFree());
   }
 
   public canPark(vehicle: Vehicle) {
-    const parkingSpotType = this.getSpotTypeForVehicle(
-      vehicle.getVehicleType()
+    const parkingSpotType = this.getSpotTypeForVehicle(vehicle.getVehicleType());
+    return (
+      this.parkingSpots.get(parkingSpotType)?.some((spot) => spot.isSpotFree()) ?? false
     );
-
-    if (this.parkingSpots.get(parkingSpotType)?.length) {
-      return true;
-    }
-
-    return false;
   }
 }

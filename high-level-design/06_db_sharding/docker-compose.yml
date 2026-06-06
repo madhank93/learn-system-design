@@ -1,0 +1,53 @@
+services:
+  shard1:
+    build: ./shard
+    environment:
+      - SHARD_ID=1
+    ports:
+      - "8091:8080"
+    networks:
+      - shardnet
+
+  shard2:
+    build: ./shard
+    environment:
+      - SHARD_ID=2
+    ports:
+      - "8092:8080"
+    networks:
+      - shardnet
+
+  shard3:
+    build: ./shard
+    environment:
+      - SHARD_ID=3
+    ports:
+      - "8093:8080"
+    networks:
+      - shardnet
+
+  router-hash:
+    build: ./router
+    environment:
+      - STRATEGY=hash
+      - SHARDS=shard1:8080,shard2:8080,shard3:8080
+    ports:
+      - "8081:8080"
+    depends_on: [shard1, shard2, shard3]
+    networks:
+      - shardnet
+
+  router-range:
+    build: ./router
+    environment:
+      - STRATEGY=range
+      - SHARDS=shard1:8080,shard2:8080,shard3:8080
+    ports:
+      - "8082:8080"
+    depends_on: [shard1, shard2, shard3]
+    networks:
+      - shardnet
+
+networks:
+  shardnet:
+    driver: bridge

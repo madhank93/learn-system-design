@@ -61,12 +61,19 @@ func (t *ParkingTicket) billedHours(end time.Time) float64 {
 }
 
 func (t *ParkingTicket) String() string {
+	end := "-"
+	amount := "pending"
+	if !t.endTime.IsZero() {
+		end = t.endTime.Format("15:04")
+		amount = fmt.Sprintf("₹%.0f", t.amount)
+	}
 	return fmt.Sprintf(
-		"Ticket{id=%.8s type=%s number=%s floor=%s spot=%s start=%s amount=%.2f}",
+		"Ticket{id=%.8s type=%s number=%s floor=%s spot=%s start=%s end=%s amount=%s}",
 		t.id, t.vehicleType, t.vehicleNumber,
 		t.floorID, t.spotID,
 		t.startTime.Format("15:04"),
-		t.amount,
+		end,
+		amount,
 	)
 }
 

@@ -1,0 +1,37 @@
+services:
+  web-1:
+    build: ./service
+    environment:
+      - SERVER_ID=web-1
+    networks:
+      dnsnet:
+        aliases:
+          - web-service
+
+  web-2:
+    build: ./service
+    environment:
+      - SERVER_ID=web-2
+    networks:
+      dnsnet:
+        aliases:
+          - web-service
+
+  db:
+    build: ./service
+    environment:
+      - SERVER_ID=db-primary
+    networks:
+      - dnsnet
+
+  client:
+    build: ./client
+    ports:
+      - "8080:8080"
+    depends_on: [web-1, web-2, db]
+    networks:
+      - dnsnet
+
+networks:
+  dnsnet:
+    driver: bridge

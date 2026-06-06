@@ -1,0 +1,49 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      - SERVER_ID=backend
+    ports:
+      - "8099:8080"
+    networks:
+      - cbnet
+
+  proxy-sensitive:
+    build: ./proxy
+    environment:
+      - UPSTREAM=http://backend:8080
+      - THRESHOLD=2
+      - TIMEOUT_SEC=3
+    ports:
+      - "8081:8080"
+    depends_on: [backend]
+    networks:
+      - cbnet
+
+  proxy-standard:
+    build: ./proxy
+    environment:
+      - UPSTREAM=http://backend:8080
+      - THRESHOLD=3
+      - TIMEOUT_SEC=5
+    ports:
+      - "8082:8080"
+    depends_on: [backend]
+    networks:
+      - cbnet
+
+  proxy-tolerant:
+    build: ./proxy
+    environment:
+      - UPSTREAM=http://backend:8080
+      - THRESHOLD=5
+      - TIMEOUT_SEC=10
+    ports:
+      - "8083:8080"
+    depends_on: [backend]
+    networks:
+      - cbnet
+
+networks:
+  cbnet:
+    driver: bridge

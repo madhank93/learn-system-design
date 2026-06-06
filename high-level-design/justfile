@@ -1,39 +1,313 @@
-# Reusable commands
-docker-clean:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  docker system prune -af --volumes
-  docker builder prune -af
+# ─────────────────────────────────────────────────────────────
+#  HLD Justfile — system design learning path
+#  Usage: just <recipe>   e.g.  just list   just caching-up
+# ─────────────────────────────────────────────────────────────
 
-compose-down dir:
-    @echo "Stopping containers in {{dir}}..."
-    cd {{dir}} && docker compose down --rmi all --volumes --remove-orphans
+# List all available recipes
+list:
+    @just --list
+
+# ── Shared helpers ────────────────────────────────────────────
+
+docker-clean:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    docker system prune -af --volumes
+    docker builder prune -af
 
 compose-up dir:
-    @echo "Starting containers in {{dir}}..."
+    @echo "Starting {{dir}}..."
     cd {{dir}} && docker compose up --force-recreate --build -d
 
-##########################
-### 02 - Load balancer ###
-##########################
+compose-down dir:
+    @echo "Stopping {{dir}}..."
+    cd {{dir}} && docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
 
-# Set the load balancer directory
-lb_dir := "02_load_balancer"
+run-test dir:
+    @echo "Testing {{dir}}..."
+    @bash {{dir}}/test.sh
 
-load_balancer_up:
-    @just compose-down {{lb_dir}}
-    @just docker-clean
-    @just compose-up {{lb_dir}}
-    @echo ""
-    @echo "Load balancer is running"
+# ── Go unit tests (no Docker needed) ─────────────────────────
 
-load_balancer_test:
-    @echo ""
-    @echo "Running load balancer tests..."
-    @bash {{lb_dir}}/test.sh
+unit-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd ..
+    go test -v -count=1 \
+        db-shard shard-router \
+        ch-router \
+        cb-proxy \
+        db-primary db-replica \
+        bloom-server \
+        retry-client \
+        dist-lock-worker
+    echo "All unit tests passed"
 
-load_balancer_down:
-    @just compose-down {{lb_dir}}
-    @just docker-clean
-    @echo ""
-    @echo "Load balancer stopped and cleaned"
+# Integration tests — spins up real Docker containers via Testcontainers
+# Requires Docker daemon running. Each test manages its own container lifecycle.
+integration-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd ..
+    go test -v -count=1 -tags integration -timeout 300s \
+        dist-lock-worker \
+        cqrs-writer \
+        cqrs-reader \
+        mq-producer \
+        mq-consumer \
+        sd-service \
+        sd-client
+    echo "All integration tests passed"
+
+# ── 02 Load Balancing ─────────────────────────────────────────
+
+load-balancing-up:
+    @just compose-up 02_load_balancer
+
+load-balancing-test:
+    @just run-test 02_load_balancer
+
+load-balancing-down:
+    @just compose-down 02_load_balancer
+
+# ── 03 Rate Limiting ──────────────────────────────────────────
+
+rate-limiting-up:
+    @just compose-up 03_rate_limiting
+
+rate-limiting-test:
+    @just run-test 03_rate_limiting
+
+rate-limiting-down:
+    @just compose-down 03_rate_limiting
+
+# ── 04 Caching ────────────────────────────────────────────────
+
+caching-up:
+    @just compose-up 04_caching
+
+caching-test:
+    @just run-test 04_caching
+
+caching-down:
+    @just compose-down 04_caching
+
+# ── 05 Message Queues ─────────────────────────────────────────
+
+message-queues-up:
+    @just compose-up 05_message_queues
+
+message-queues-test:
+    @just run-test 05_message_queues
+
+message-queues-down:
+    @just compose-down 05_message_queues
+
+# ── 06 Database Sharding ──────────────────────────────────────
+
+db-sharding-up:
+    @just compose-up 06_db_sharding
+
+db-sharding-test:
+    @just run-test 06_db_sharding
+
+db-sharding-down:
+    @just compose-down 06_db_sharding
+
+# ── 07 API Gateway ────────────────────────────────────────────
+
+api-gateway-up:
+    @just compose-up 07_api_gateway
+
+api-gateway-test:
+    @just run-test 07_api_gateway
+
+api-gateway-down:
+    @just compose-down 07_api_gateway
+
+# ── 08 Consistent Hashing ─────────────────────────────────────
+
+consistent-hashing-up:
+    @just compose-up 08_consistent_hashing
+
+consistent-hashing-test:
+    @just run-test 08_consistent_hashing
+
+consistent-hashing-down:
+    @just compose-down 08_consistent_hashing
+
+# ── 09 CDN ────────────────────────────────────────────────────
+
+cdn-up:
+    @just compose-up 09_cdn
+
+cdn-test:
+    @just run-test 09_cdn
+
+cdn-down:
+    @just compose-down 09_cdn
+
+# ── 10 Circuit Breaker ────────────────────────────────────────
+
+circuit-breaker-up:
+    @just compose-up 10_circuit_breaker
+
+circuit-breaker-test:
+    @just run-test 10_circuit_breaker
+
+circuit-breaker-down:
+    @just compose-down 10_circuit_breaker
+
+# ── 11 Service Discovery ──────────────────────────────────────
+
+service-discovery-up:
+    @just compose-up 11_service_discovery
+
+service-discovery-test:
+    @just run-test 11_service_discovery
+
+service-discovery-down:
+    @just compose-down 11_service_discovery
+
+# ── 12 CQRS & Event Sourcing ──────────────────────────────────
+
+cqrs-up:
+    @just compose-up 12_cqrs_event_sourcing
+
+cqrs-test:
+    @just run-test 12_cqrs_event_sourcing
+
+cqrs-down:
+    @just compose-down 12_cqrs_event_sourcing
+
+# ── 13 DNS ────────────────────────────────────────────────────
+
+dns-up:
+    @just compose-up 13_dns
+
+dns-test:
+    @just run-test 13_dns
+
+dns-down:
+    @just compose-down 13_dns
+
+# ── 14 Database Replication ───────────────────────────────────
+
+db-replication-up:
+    @just compose-up 14_db_replication
+
+db-replication-test:
+    @just run-test 14_db_replication
+
+db-replication-down:
+    @just compose-down 14_db_replication
+
+# ── 15 CAP Theorem ────────────────────────────────────────────
+
+cap-theorem-up:
+    @just compose-up 15_cap_theorem
+
+cap-theorem-test:
+    @just run-test 15_cap_theorem
+
+cap-theorem-down:
+    @just compose-down 15_cap_theorem
+
+# ── 16 SQL vs NoSQL ───────────────────────────────────────────
+
+sql-vs-nosql-up:
+    @just compose-up 16_sql_vs_nosql
+
+sql-vs-nosql-test:
+    @just run-test 16_sql_vs_nosql
+
+sql-vs-nosql-down:
+    @just compose-down 16_sql_vs_nosql
+
+# ── 17 Bloom Filter ───────────────────────────────────────────
+
+bloom-filter-up:
+    @just compose-up 17_bloom_filter
+
+bloom-filter-test:
+    @just run-test 17_bloom_filter
+
+bloom-filter-down:
+    @just compose-down 17_bloom_filter
+
+# ── 18 WebSockets / SSE ───────────────────────────────────────
+
+websockets-up:
+    @just compose-up 18_websockets_sse
+
+websockets-test:
+    @just run-test 18_websockets_sse
+
+websockets-down:
+    @just compose-down 18_websockets_sse
+
+# ── 19 Distributed Locking ────────────────────────────────────
+
+distributed-locking-up:
+    @just compose-up 19_distributed_locking
+
+distributed-locking-test:
+    @just run-test 19_distributed_locking
+
+distributed-locking-down:
+    @just compose-down 19_distributed_locking
+
+# ── 20 Retry / Backoff ────────────────────────────────────────
+
+retry-backoff-up:
+    @just compose-up 20_retry_backoff
+
+retry-backoff-test:
+    @just run-test 20_retry_backoff
+
+retry-backoff-down:
+    @just compose-down 20_retry_backoff
+
+# ── Bulk operations ───────────────────────────────────────────
+
+# Run all integration tests sequentially (up → test → down per topic)
+test-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dirs=(
+        02_load_balancer 03_rate_limiting 04_caching
+        05_message_queues 06_db_sharding 07_api_gateway
+        08_consistent_hashing 09_cdn 10_circuit_breaker
+        11_service_discovery 12_cqrs_event_sourcing 13_dns
+        14_db_replication 15_cap_theorem 16_sql_vs_nosql
+        17_bloom_filter 18_websockets_sse 19_distributed_locking
+        20_retry_backoff
+    )
+    pass=0; fail=0
+    for d in "${dirs[@]}"; do
+        echo ""
+        echo "== $d =="
+        docker compose -f "$d/docker-compose.yml" up --build -d --quiet-pull 2>/dev/null
+        sleep 3
+        if bash "$d/test.sh"; then
+            echo "PASS  $d"
+            ((pass++)) || true
+        else
+            echo "FAIL  $d"
+            ((fail++)) || true
+        fi
+        docker compose -f "$d/docker-compose.yml" down --volumes --remove-orphans 2>/dev/null || true
+    done
+    echo ""
+    echo "Results: $pass passed, $fail failed"
+
+# Stop and remove all running HLD containers
+down-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for dir in */; do
+        [ -f "$dir/docker-compose.yml" ] || continue
+        docker compose -f "$dir/docker-compose.yml" down --volumes --remove-orphans 2>/dev/null || true
+        echo "stopped $dir"
+    done
+    echo "All HLD containers stopped"

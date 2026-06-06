@@ -1,0 +1,77 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mqnet
+
+  producer:
+    build: ./producer
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - mqnet
+
+  consumer-work-1:
+    build: ./consumer
+    environment:
+      - CONSUMER_ID=work-1
+      - QUEUE_NAME=work
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - mqnet
+
+  consumer-work-2:
+    build: ./consumer
+    environment:
+      - CONSUMER_ID=work-2
+      - QUEUE_NAME=work
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - mqnet
+
+  consumer-fanout-1:
+    build: ./consumer
+    environment:
+      - CONSUMER_ID=fanout-1
+      - EXCHANGE_NAME=events
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - mqnet
+
+  consumer-fanout-2:
+    build: ./consumer
+    environment:
+      - CONSUMER_ID=fanout-2
+      - EXCHANGE_NAME=events
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - mqnet
+
+networks:
+  mqnet:
+    driver: bridge

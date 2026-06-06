@@ -1,0 +1,41 @@
+services:
+  node1:
+    build: ./node
+    environment:
+      - NODE_ID=node1
+    ports:
+      - "8091:8080"
+    networks:
+      - chnet
+
+  node2:
+    build: ./node
+    environment:
+      - NODE_ID=node2
+    ports:
+      - "8092:8080"
+    networks:
+      - chnet
+
+  node3:
+    build: ./node
+    environment:
+      - NODE_ID=node3
+    ports:
+      - "8093:8080"
+    networks:
+      - chnet
+
+  router:
+    build: ./router
+    environment:
+      - NODES=node1:8080,node2:8080,node3:8080
+    ports:
+      - "8080:8080"
+    depends_on: [node1, node2, node3]
+    networks:
+      - chnet
+
+networks:
+  chnet:
+    driver: bridge

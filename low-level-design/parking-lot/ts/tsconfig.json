@@ -10,7 +10,7 @@
     "noImplicitAny": true,
     "esModuleInterop": true,
     "sourceMap": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true
   },
   "ts-node": {

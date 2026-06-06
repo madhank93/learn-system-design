@@ -1,0 +1,58 @@
+services:
+  server1:
+    build: ./server
+    environment:
+      - SERVER_ID=1
+      - REGION=us
+    networks:
+      - cachenet
+
+  server2:
+    build: ./server
+    environment:
+      - SERVER_ID=2
+      - REGION=eu
+    networks:
+      - cachenet
+
+  server3:
+    build: ./server
+    environment:
+      - SERVER_ID=3
+      - REGION=ap
+    networks:
+      - cachenet
+
+  nginx-no-cache:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/no_cache.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8081:80"
+    depends_on: [server1, server2, server3]
+    networks:
+      - cachenet
+
+  nginx-proxy-cache:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/proxy_cache.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8082:80"
+    depends_on: [server1, server2, server3]
+    networks:
+      - cachenet
+
+  nginx-stale:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/stale.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8083:80"
+    depends_on: [server1, server2, server3]
+    networks:
+      - cachenet
+
+networks:
+  cachenet:
+    driver: bridge

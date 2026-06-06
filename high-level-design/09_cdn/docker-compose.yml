@@ -1,0 +1,39 @@
+services:
+  origin:
+    build: ./origin
+    networks:
+      - cdnnet
+
+  nginx-no-cache:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/no_cache.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8081:80"
+    depends_on: [origin]
+    networks:
+      - cdnnet
+
+  nginx-edge-cache:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/edge_cache.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8082:80"
+    depends_on: [origin]
+    networks:
+      - cdnnet
+
+  nginx-selective:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/selective.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8083:80"
+    depends_on: [origin]
+    networks:
+      - cdnnet
+
+networks:
+  cdnnet:
+    driver: bridge

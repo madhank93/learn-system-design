@@ -84,12 +84,12 @@ func main() {
 	if err := exitPanel.Checkout(ticket1); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Car1 checked out. Amount: ₹%.0f\n", ticket1.Amount())
+	fmt.Printf("Car1 settled:  %s\n", ticket1)
 
 	if err := xp2.Checkout(ticketTruck); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Truck checked out. Amount: ₹%.0f\n", ticketTruck.Amount())
+	fmt.Printf("Truck settled: %s\n", ticketTruck)
 
 	fmt.Println("\n=== Display Board (after checkouts) ===")
 	floor1.ShowDisplayBoard()
