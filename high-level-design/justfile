@@ -29,7 +29,8 @@ run-test dir:
 lab-check dir step:
     @bash {{dir}}/lab/check.sh {{step}}
 
-# Smoke-run every topic lab happy-path end-to-end (Docker required)
+# Smoke-run every topic lab happy-path end-to-end (Docker required).
+# WARNING: tears down and rebuilds each topic's compose stack — don't run mid-lab.
 lab-verify-all:
     @bash networking-and-edge/2.1_load_balancer/lab/verify.sh
 

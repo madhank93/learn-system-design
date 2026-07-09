@@ -8,6 +8,7 @@ cleanup() { (cd "$DIR" && docker compose down --remove-orphans >/dev/null 2>&1) 
 trap cleanup EXIT
 
 echo "── lab verify: load-balancing ──"
+echo "   (rebuilds the load-balancing stack — any manual lab session will be reset)"
 (cd "$DIR" && docker compose up --build -d)
 sleep 3
 bash "$CHECK" 1
