@@ -86,7 +86,7 @@ flowchart TB
 <LoadBalancerSim client:only="react" />
 
 :::note
-This one simulator replaces five static diagrams from the old site — the balancer overview, the "server down" state, the four-algorithm comparison, the sticky-session failover, and the health-check state machine. They are all just *states* of this one interactive.
+This one simulator replaces four static diagrams from the old site — the balancer overview, the "server down" state, the four-algorithm comparison, and the sticky-session failover. They are all just *states* of this one interactive. (The health-check lifecycle gets its own state diagram below.)
 :::
 
 ### Round Robin
@@ -229,7 +229,7 @@ Follow one request through the balancer, then watch what health checks do when a
 
 The health-check lifecycle is a small state machine:
 
-<Figure caption="A server is evicted after consecutive probe failures and readmitted after passing probes — ideally ramped back gradually (slow start).">
+<Figure caption="The production health-check lifecycle. This lab's OSS Nginx uses simpler passive defaults — one failed request evicts a server (max_fails=1) for 10 seconds (fail_timeout), then full traffic returns at once: no Suspect tier, no slow-start ramp.">
 ```mermaid
 stateDiagram-v2
     direction LR
@@ -238,7 +238,7 @@ stateDiagram-v2
     Suspect --> Evicted: 3rd consecutive failure
     Evicted --> Recovering: probe passes again
     Recovering --> Healthy: slow start ramp complete
-    note right of Evicted: removed from rotation,\nretry probes continue
+    note right of Evicted: removed from rotation,<br/>retry probes continue
 ```
 </Figure>
 
@@ -303,8 +303,9 @@ algorithm. Strong answers cover: **(1)** L4 vs L7 — what do you need to *see*
 to route (cookies/URLs → L7)? **(2)** Who balances the balancers — DNS or
 anycast VIP to survive LB failure? **(3)** Health-check tuning — aggressive
 probes evict flaky-but-alive servers; lazy probes send traffic into a black
-hole. **(4)** What happens during deploys — draining and slow start, the two
-things this page's lab lets you watch for real.
+hole. **(4)** What happens during deploys — connection draining, and why the
+recovery stampede you can trigger in this page's lab is exactly the failure
+mode slow start exists to prevent.
 :::
 
 ## This implementation
@@ -360,7 +361,7 @@ with the ⏻ buttons — this is the same experiment against real containers.)
     run: 'cd networking-and-edge/2.1_load_balancer && docker compose stop server2 && cd ../..',
     observe: 'Curl :8081 again — every request still succeeds. Nginx marks server2 failed on first error and retries the next server; clients never see it.',
     check: 'just load-balancing-lab-check 3',
-    expect: 'server2 stopped, 20/20 requests still succeeded · nginx evicted it (0/20 hit Server 2)',
+    expect: 'server2 stopped, 20/20 requests still succeeded · nginx evicted it (0/20 requests hit Server 2)',
   },
   {
     title: 'Make least-connections earn its name',
@@ -374,7 +375,7 @@ with the ⏻ buttons — this is the same experiment against real containers.)
     run: 'for i in {1..5}; do curl -s --cookie "session_id=alice" localhost:8084; done',
     observe: 'Alice lands on the same server every time; a different cookie may land elsewhere. Same input, same hash, same server.',
     check: 'just load-balancing-lab-check 5',
-    expect: 'alice pinned to one server across 5 requests',
+    expect: "alice pinned to one server across 5 requests · bob pinned too (possibly a different server — that's the hash)",
   },
   {
     title: 'Tear down',
