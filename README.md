@@ -24,6 +24,8 @@ just integration-test   # Testcontainers integration tests (Docker needed)
 just <topic>-up         # start a topic's Docker Compose stack
 just <topic>-test       # run its test script
 just <topic>-down       # tear down
+just <topic>-lab        # guided lab: break things, verify with checkpoints
+just <topic>-lab-check N # verify lab step N (load-balancing has the first lab)
 just dc-build-all       # build all Gossip Glomers challenge binaries
 ```
 
