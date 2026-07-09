@@ -17,18 +17,18 @@ require_url() { # require_url <url> [hint] — stack-up guard, friendly when dow
 }
 
 get() { # get <url> — one request body (empty on failure)
-  curl -sf --max-time 5 "$1" 2>/dev/null
+  curl -sf --max-time 5 "$1" 2>/dev/null || true
 }
 
 hits() { # hits <url> <n> — n sequential request bodies, one per line
   local i
-  for i in $(seq 1 "$2"); do curl -sf --max-time 5 "$1" 2>/dev/null; done
+  for i in $(seq 1 "$2"); do curl -sf --max-time 5 "$1" 2>/dev/null || true; done
 }
 
-count_server() { # count_server <output> <id> — lines mentioning "Server <id>"
-  printf '%s\n' "$1" | grep -c "Server $2" || true
+count_server() { # count_server <output> <id> — lines whose server id is exactly <id>
+  printf '%s\n' "$1" | grep -o 'Server [0-9]*' | grep -cx "Server $2" || true
 }
 
 distinct_servers() { # distinct_servers <output> — number of distinct server ids seen
-  printf '%s\n' "$1" | grep -o 'Server [0-9]*' | sort -u | wc -l | tr -d ' '
+  printf '%s\n' "$1" | { grep -o 'Server [0-9]*' || true; } | sort -u | grep -c . || true
 }
