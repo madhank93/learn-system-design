@@ -320,10 +320,15 @@
 .lsd-lab-cmd, .lsd-lab-check pre {
   margin: 0.35rem 0;
   padding: 0.5rem 0.7rem;
+  border: 1px solid var(--sl-color-gray-5);
   border-radius: 0.4rem;
   background: var(--sl-color-black);
   overflow-x: auto;
   font-size: 0.85rem;
+}
+.lsd-lab-cmd code, .lsd-lab-check pre code {
+  background: none;
+  color: var(--sl-color-gray-1);
 }
 .lsd-lab-observe { margin: 0.35rem 0; color: var(--sl-color-gray-2); font-size: 0.92rem; }
 .lsd-lab-check { border-left: 3px solid var(--sl-color-green, #2ecc71); padding-left: 0.6rem; margin-top: 0.5rem; }
