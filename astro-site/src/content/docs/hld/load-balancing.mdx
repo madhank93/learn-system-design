@@ -227,12 +227,30 @@ Follow one request through the balancer, then watch what health checks do when a
 4. That server returns 200 OK
 5. Balancer relays the response to the client
 
-The probe cycle, one transition per phase:
+The health-check lifecycle is a small state machine:
 
-1. Server healthy — receiving traffic
-2. Probe fires every 10 seconds
-3. Third consecutive probe fails → removed from rotation
-4. Retry probes continue; one passing probe readmits it
+<Figure caption="A server is evicted after consecutive probe failures and readmitted after passing probes — ideally ramped back gradually (slow start).">
+```mermaid
+stateDiagram-v2
+    direction LR
+    Healthy --> Suspect: probe fails
+    Suspect --> Healthy: next probe passes
+    Suspect --> Evicted: 3rd consecutive failure
+    Evicted --> Recovering: probe passes again
+    Recovering --> Healthy: slow start ramp complete
+    note right of Evicted: removed from rotation,\nretry probes continue
+```
+</Figure>
+
+:::caution[The recovery stampede]
+The dangerous moment isn't the failure — it's the recovery. A server that rejoins
+with a cold cache and zero connections looks maximally attractive to *least
+connections*, so the balancer floods it, it slows down or dies again, and the
+pool flaps. That's why production balancers ramp a recovered server's share
+gradually (`slow_start` in Nginx Plus, "connection warmup" elsewhere) and why
+you drain connections (stop sending new requests, let in-flight ones finish)
+before taking a server down on purpose — a deploy is just a voluntary failure.
+:::
 
 :::caution
 Sticky sessions trade statefulness for availability: if the pinned server dies, its in-memory sessions are lost. Externalize session state to Redis or Memcached if losing a session means losing a cart.
@@ -278,6 +296,16 @@ flowchart TD
 | Least Connections | Ignores server capacity | Heterogeneous fleet — the weakest server gets "rewarded" for being slow |
 | Geo routing | Ignores load entirely | One region spikes while another idles |
 | Consistent Hashing | Uneven distribution with few nodes | Hot keys or too few vnodes concentrate load on one server |
+
+:::tip[Interview lens]
+"How would you design the load-balancing tier?" is rarely about naming an
+algorithm. Strong answers cover: **(1)** L4 vs L7 — what do you need to *see*
+to route (cookies/URLs → L7)? **(2)** Who balances the balancers — DNS or
+anycast VIP to survive LB failure? **(3)** Health-check tuning — aggressive
+probes evict flaky-but-alive servers; lazy probes send traffic into a black
+hole. **(4)** What happens during deploys — draining and slow start, the two
+things this page's lab lets you watch for real.
+:::
 
 ## This implementation
 
