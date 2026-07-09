@@ -1,0 +1,366 @@
+---
+title: Load Balancing
+description: Round Robin, Least Connections, Geo-based routing, and Consistent Hashing — running live with Nginx, Go, and Docker.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import TopicNav from '../../../components/TopicNav.astro';
+import RunCode from '../../../components/RunCode.astro';
+import LoadBalancerFlow from '../../../components/LoadBalancerFlow';
+import LoadBalancerSim from '../../../components/LoadBalancerSim';
+import LabSteps from '../../../components/LabSteps.astro';
+
+<Badge text="Beginner" variant="success" /> <Badge text="Has code" variant="note" /> <Badge text="Docker required" variant="note" />
+
+Think of a load balancer like the host at a busy restaurant. Guests don't pick their own table — the host seats each party where there's room, keeps any one waiter from being swamped, and quietly stops seating people in a section where the waiter just went home sick. Diners never know how the seating works; they just get served.
+
+**You'll learn:**
+- What load balancing is and the bottleneck it removes
+- How four routing algorithms decide where each request goes
+- When to pick each algorithm and what each one ignores
+
+## What is load balancing?
+
+Load balancing distributes incoming traffic across multiple servers. No single server becomes a bottleneck, a single point of failure, or a performance ceiling. The balancer is the one address clients see; the server pool behind it can grow, shrink, and fail without clients noticing.
+
+<Figure caption="Clients never talk to servers directly — the load balancer is the single entry point that spreads requests across the pool.">
+```mermaid
+flowchart LR
+    subgraph Clients
+        C1["Client A"]
+        C2["Client B"]
+        C3["Client C"]
+        C4["Client D"]
+    end
+    LB["⚖️ Load Balancer"]
+    subgraph Servers
+        S1["Server 1<br/>(us-east)"]
+        S2["Server 2<br/>(eu-west)"]
+        S3["Server 3<br/>(global)"]
+    end
+    C1 & C2 & C3 & C4 --> LB
+    LB --> S1 & S2 & S3
+```
+</Figure>
+
+## Why it matters
+
+- One server caps your throughput at one machine's capacity — a balancer turns N machines into one logical service.
+- A failed server is removed from rotation by health checks — users see retries on healthy nodes, not errors.
+- Traffic spikes are absorbed by adding servers behind the balancer, with zero client-side changes.
+- Routing decisions (region, session, load) happen in one place instead of in every client.
+
+## How it works
+
+The balancer accepts each incoming connection, picks a backend by algorithm, and forwards the request. A health checker probes every server continuously and pulls failures out of rotation. Which signals the balancer can read depends on the layer it operates at.
+
+**See it run.** Below, requests stream in as live traffic. Drive the rate past what the pool can serve and queues build, latency climbs, and requests start to drop — the exact failure mode a balancer exists to manage.
+
+<LoadBalancerFlow client:only="react" />
+
+### Operating levels
+
+<Figure caption="Layer 4 routes on IP and port alone (fast); Layer 7 reads the HTTP request to make smarter, content-aware decisions.">
+```mermaid
+flowchart TB
+    subgraph OSI["OSI Stack"]
+        L7["Layer 7 — Application<br/>HTTP headers, cookies, URL, body"]
+        L4["Layer 4 — Transport<br/>TCP/UDP IP + port only"]
+        L3["Layer 3 — Network<br/>IP routing"]
+    end
+    L7 -->|"slower but smarter"| LB7["Geo-routing<br/>Consistent Hashing<br/>URL-based routing"]
+    L4 -->|"fast, minimal overhead"| LB4["Round Robin<br/>Least Connections<br/>IP Hash"]
+```
+</Figure>
+
+| Layer | Sees | Speed | Examples |
+|-------|------|-------|---------|
+| **L4 Transport** | IP + TCP port | Fast | Round Robin, Least Connections |
+| **L7 Application** | HTTP headers, cookies, URL | Slower but smarter | Geo-routing, Consistent Hashing |
+
+## The four algorithms
+
+**Play with it.** Pick an algorithm, fire traffic, and take a server down to watch health checks reroute. Switch to *Sticky* to see each client pinned to one server.
+
+<LoadBalancerSim client:only="react" />
+
+:::note
+This one simulator replaces five static diagrams from the old site — the balancer overview, the "server down" state, the four-algorithm comparison, the sticky-session failover, and the health-check state machine. They are all just *states* of this one interactive.
+:::
+
+### Round Robin
+
+Each request goes to the next server in a circular sequence: S1 → S2 → S3 → S1 → …
+
+<Figure caption="Round robin walks a counter across the pool, wrapping back to the first server after the last.">
+```mermaid
+sequenceDiagram
+    participant LB as Load Balancer
+    participant S1 as Server 1
+    participant S2 as Server 2
+    participant S3 as Server 3
+    Note over LB: counter = 0
+    LB->>S1: Request 1 (counter=0 → S1)
+    Note over LB: counter = 1
+    LB->>S2: Request 2 (counter=1 → S2)
+    Note over LB: counter = 2
+    LB->>S3: Request 3 (counter=2 → S3)
+    Note over LB: counter = 0 (wraps)
+    LB->>S1: Request 4 (counter=0 → S1)
+```
+</Figure>
+
+```nginx
+upstream backend {
+    zone backend_zone 64k;
+    server server1:8080;
+    server server2:8080;
+    server server3:8080;
+    # No directive = Round Robin by default
+}
+
+server {
+    listen 80;
+    location / {
+        proxy_pass         http://backend;
+        proxy_set_header   Host       $host;
+        proxy_set_header   X-Real-IP  $remote_addr;
+    }
+}
+```
+
+:::caution
+Limitation: Round Robin ignores server load. A slow request on Server 1 doesn't prevent new requests from also hitting Server 1. Works best when request duration is uniform.
+:::
+
+### Least Connections
+
+Route each new request to the server with the fewest active connections at that moment. (In the simulator above, switch to *Least Connections* and watch new traffic favor the idle servers.)
+
+```nginx
+upstream backend {
+    least_conn;                # ← the only change
+    zone backend_zone 64k;
+    server server1:8080;
+    server server2:8080;
+    server server3:8080;
+}
+```
+
+:::caution
+Limitation: requires tracking active sessions per server. Doesn't account for processing capacity — a slow underpowered server with 1 connection is preferred over a fast server with 2.
+:::
+
+### Geo-based routing
+
+Route requests to the geographically nearest server, reducing latency. In production: client IP → GeoIP database lookup → region → server pool. In local dev: simulate with a custom `X-Region` header.
+
+<Figure caption="Header/geo-based routing sends each request to the server matching its region, with a default fallback.">
+```mermaid
+flowchart LR
+    US["🇺🇸 US Request<br/>X-Region: us"] --> LB
+    EU["🇪🇺 EU Request<br/>X-Region: eu"] --> LB
+    JP["🇯🇵 JP Request<br/>X-Region: jp"] --> LB
+    Other["Other Request<br/>(no header)"] --> LB
+    LB --> |"us"| S1["Server 1<br/>REGION=us"]
+    LB --> |"eu"| S2["Server 2<br/>REGION=eu"]
+    LB --> |"default"| S3["Server 3<br/>REGION=global"]
+```
+</Figure>
+
+```nginx
+map $http_x_region $backend_upstream {
+    default  global_backend;
+    us       us_backend;
+    eu       eu_backend;
+}
+
+upstream us_backend     { zone us_zone 64k;     server server1:8080; }
+upstream eu_backend     { zone eu_zone 64k;     server server2:8080; }
+upstream global_backend { zone global_zone 64k; server server3:8080; }
+```
+
+### Consistent Hashing
+
+Hash a stable client key (session cookie, user ID) to always route the same client to the same server — regardless of which server receives the request. (This is *Sticky* mode in the simulator; the dedicated [Consistent Hashing](/hld/consistent-hashing/) page has an interactive ring.)
+
+<Figure caption="Consistent hashing places each server on a ring; a key is owned by the first server clockwise from its hash.">
+```mermaid
+flowchart TD
+    subgraph Ring["Hash Ring"]
+        S1["Server 1<br/>(position 0)"]
+        S2["Server 2<br/>(position 120°)"]
+        S3["Server 3<br/>(position 240°)"]
+    end
+    A["alice → hash('alice') = 45°"] --> S1
+    B["bob → hash('bob') = 130°"] --> S2
+    C["carol → hash('carol') = 270°"] --> S3
+```
+</Figure>
+
+:::note
+Why consistent hashing beats simple modulo: with `server = hash(key) % N`, adding 1 server remaps almost all keys — cache misses everywhere. With consistent hashing, only the keys between the new server and its predecessor remap — roughly 1/N of keys move.
+:::
+
+```nginx
+upstream backend {
+    hash $cookie_session_id consistent;   # ← the key directive
+    zone backend_zone 64k;
+    server server1:8080;
+    server server2:8080;
+    server server3:8080;
+}
+```
+
+:::caution
+Limitation: uneven hash distribution is possible, especially with few servers. Virtual nodes (each physical server occupies multiple ring positions) solve this in production implementations.
+:::
+
+## Request flow and health checks
+
+Follow one request through the balancer, then watch what health checks do when a server dies (drive both in the simulator above):
+
+1. `GET /orders` hits the load balancer (TLS terminates here)
+2. Routing table consulted — a server is excluded after failed probes
+3. The algorithm picks a healthy server
+4. That server returns 200 OK
+5. Balancer relays the response to the client
+
+The probe cycle, one transition per phase:
+
+1. Server healthy — receiving traffic
+2. Probe fires every 10 seconds
+3. Third consecutive probe fails → removed from rotation
+4. Retry probes continue; one passing probe readmits it
+
+:::caution
+Sticky sessions trade statefulness for availability: if the pinned server dies, its in-memory sessions are lost. Externalize session state to Redis or Memcached if losing a session means losing a cart.
+:::
+
+## Key concepts
+
+| Term | What it means |
+|------|---------------|
+| VIP | The virtual IP clients connect to — survives individual balancer failures |
+| Health check | A periodic probe that pulls failing servers out of rotation automatically |
+| Sticky session | Pinning a client to one server so in-memory session state keeps working |
+| Hash ring | The circular keyspace consistent hashing places servers and keys on |
+| Slow start | Ramping a recovered server's traffic share gradually to avoid a cold-cache spike |
+
+## When to use it
+
+<Figure caption="Choosing an algorithm: session state, geography, and request-duration variance each point to a different default.">
+```mermaid
+flowchart TD
+    Start["New request arrives"] --> Q1{Session state on server?}
+    Q1 -->|"Yes"| CH["Consistent Hashing<br/>(sticky sessions)"]
+    Q1 -->|"No"| Q2{Global users diff regions?}
+    Q2 -->|"Yes"| GEO["Geo-based Routing<br/>(low latency)"]
+    Q2 -->|"No"| Q3{Variable request duration?}
+    Q3 -->|"Yes"| LC["Least Connections<br/>(adaptive)"]
+    Q3 -->|"No"| RR["Round Robin<br/>(simple + fast)"]
+```
+</Figure>
+
+| Port | Algorithm | Use When |
+|------|-----------|---------|
+| 8081 | Round Robin | Stateless, uniform request times |
+| 8082 | Least Connections | Variable request durations |
+| 8083 | Geo-based Routing | Global app with regional servers |
+| 8084 | Consistent Hashing | Stateful sessions, caching |
+
+## Trade-offs and failure modes
+
+| Algorithm | Blind spot | Bites you when |
+|---|---|---|
+| Round Robin | Ignores actual server load | Request durations vary widely — slow requests pile onto busy servers |
+| Least Connections | Ignores server capacity | Heterogeneous fleet — the weakest server gets "rewarded" for being slow |
+| Geo routing | Ignores load entirely | One region spikes while another idles |
+| Consistent Hashing | Uneven distribution with few nodes | Hot keys or too few vnodes concentrate load on one server |
+
+## This implementation
+
+<RunCode path="networking-and-edge/2.1_load_balancer" recipe="load-balancing" />
+
+A Go HTTP server that identifies itself on every response, Dockerized, behind 4 Nginx instances — one per algorithm — on one Docker network. Each server prints its ID and region, making the distribution algorithm visible per request:
+
+```go
+http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+    sessionID := "anonymous"
+    if cookie, err := r.Cookie("session_id"); err == nil {
+        sessionID = cookie.Value
+    }
+    visits[sessionID]++
+    fmt.Fprintf(w, "Server %s (%s) | Session: %s | Visit: %d\n",
+        id, region, sessionID, visits[sessionID])
+})
+```
+
+| Service | What it does |
+|---------|--------------|
+| `server1–3` | Go echo servers with `SERVER_ID` + `REGION` env vars |
+| `nginx-round-robin` | Round robin pool on :8081 |
+| `nginx-least-conn` | Least-connections pool on :8082 |
+| `nginx-geo-env` | Header-mapped regional pools on :8083 |
+| `nginx-consistent-hash` | Cookie-hashed sticky pool on :8084 |
+
+## Lab: break it and watch it heal
+
+You just watched the simulator evict a dead server — now do it to a real Nginx.
+Run every command from `high-level-design/`; each checkpoint tells you exactly
+what passed or what to fix. (You already killed servers in the simulator above
+with the ⏻ buttons — this is the same experiment against real containers.)
+
+<LabSteps steps={[
+  {
+    title: 'Start the stack',
+    run: 'just load-balancing-up',
+    observe: 'Four Nginx load balancers come up — one per algorithm — on ports 8081–8084, sharing the same three Go servers.',
+    check: 'just load-balancing-lab-check 1',
+    expect: 'all four load balancers up (:8081–:8084)',
+  },
+  {
+    title: 'Watch round robin take turns',
+    run: 'for i in {1..6}; do curl -s localhost:8081; done',
+    observe: 'Responses rotate 1 → 2 → 3 → 1 → 2 → 3. No server is favored; none is spared.',
+    check: 'just load-balancing-lab-check 2',
+    expect: "each server took its turn — that's the rotating counter",
+  },
+  {
+    title: 'Kill a server mid-traffic',
+    run: 'cd networking-and-edge/2.1_load_balancer && docker compose stop server2 && cd ../..',
+    observe: 'Curl :8081 again — every request still succeeds. Nginx marks server2 failed on first error and retries the next server; clients never see it.',
+    check: 'just load-balancing-lab-check 3',
+    expect: 'server2 stopped, 20/20 requests still succeeded · nginx evicted it (0/20 hit Server 2)',
+  },
+  {
+    title: 'Make least-connections earn its name',
+    run: 'cd networking-and-edge/2.1_load_balancer && docker compose start server2 && cd ../..\nsleep 11   # nginx holds a recovered server out of rotation for ~10s\ncurl -s "localhost:8082/?sleep=6s" &\ncurl -s "localhost:8082/?sleep=6s" &\nsleep 1; for i in {1..9}; do curl -s localhost:8082; done',
+    observe: 'Two servers are stuck serving 6-second requests. Least-conn funnels the quick requests to the idle one. Try the same on :8081 — round robin keeps feeding the busy servers.',
+    check: 'just load-balancing-lab-check 4',
+    expect: "quick requests avoided the two busy servers — that's least connections",
+  },
+  {
+    title: 'Pin a session with consistent hashing',
+    run: 'for i in {1..5}; do curl -s --cookie "session_id=alice" localhost:8084; done',
+    observe: 'Alice lands on the same server every time; a different cookie may land elsewhere. Same input, same hash, same server.',
+    check: 'just load-balancing-lab-check 5',
+    expect: 'alice pinned to one server across 5 requests',
+  },
+  {
+    title: 'Tear down',
+    run: 'just load-balancing-down',
+    check: 'just load-balancing-lab-check 6',
+    expect: 'stack is down — lab complete 🎉',
+  },
+]} />
+
+## Further reading
+
+- [Nginx HTTP Load Balancing Guide](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/) — every directive used in this module, documented
+- [Consistent Hashing Algorithm — High Scalability](https://highscalability.com/consistent-hashing-algorithm/) — the ring, vnodes, and remap math explained
+- [What Is Load Balancing? — AWS](https://aws.amazon.com/what-is/load-balancing/) — L4 vs L7 in cloud-provider terms (NLB vs ALB)
+- [Nginx GeoIP Access Control](https://docs.nginx.com/nginx/admin-guide/security-controls/controlling-access-by-geoip/) — production GeoIP lookup replacing the X-Region header simulation
+
+<TopicNav next={{ label: 'Caching', slug: 'hld/caching' }} />
