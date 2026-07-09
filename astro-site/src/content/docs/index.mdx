@@ -1,0 +1,58 @@
+---
+title: Learn System Design
+description: System design concepts you can read, simulate in the browser, run in Docker, and break in a guided lab.
+template: splash
+hero:
+  title: Learn System Design by Breaking Things
+  tagline: Every topic is a four-step loop — read the concept, play the interactive simulation, run the real stack in Docker, then follow a guided lab that makes you break it and watch it heal.
+  actions:
+    - text: Start with Load Balancing
+      link: /hld/load-balancing/
+      icon: right-arrow
+      variant: primary
+    - text: Browse the code on GitHub
+      link: https://github.com/madhank93/learn-system-design
+      icon: github
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## The learning loop
+
+**📖 Read** the concept → **🎛 Simulate** it live in your browser → **🐳 Run** the real Go + Nginx + Docker stack → **🧪 Lab**: kill servers, flood caches, trip breakers — with scripted checkpoints (`just <topic>-lab-check <n>`) telling you exactly what passed.
+
+## The path
+
+<CardGrid>
+  <Card title="1 · Load Balancing" icon="setting">
+    Round robin, least connections, consistent hashing — then stop a container
+    and watch Nginx evict it with zero failed requests.
+    [Read → Sim → Run → Lab](/hld/load-balancing/)
+  </Card>
+  <Card title="2 · Caching" icon="seti:db">
+    Hit ratios, TTLs, and the stampede that takes down your database.
+    [Read → Sim → Run](/hld/caching/)
+  </Card>
+  <Card title="3 · Rate Limiting" icon="warning">
+    Token buckets and sliding windows — what actually happens at request 101.
+    [Read → Sim → Run](/hld/rate-limiting/)
+  </Card>
+  <Card title="4 · Circuit Breaker" icon="error">
+    Closed, open, half-open: failing fast so one dead dependency doesn't
+    cascade. [Read → Sim → Run](/hld/circuit-breaker/)
+  </Card>
+  <Card title="5 · DB Replication" icon="seti:db">
+    Primary/replica, replication lag, and what your users see during failover.
+    [Read → Sim → Run](/hld/db-replication/)
+  </Card>
+  <Card title="6 · Consistent Hashing" icon="puzzle">
+    The ring, virtual nodes, and why adding a server doesn't remap the world.
+    [Read → Sim → Run](/hld/consistent-hashing/)
+  </Card>
+</CardGrid>
+
+## Beyond the six
+
+The [GitHub repo](https://github.com/madhank93/learn-system-design) has 25+ more
+runnable topics — sharding, CQRS, leader election, gossip protocols, real-world
+designs — all migrating to this site with sims and labs. Star it to follow along.
