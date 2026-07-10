@@ -1,0 +1,16 @@
+# Mounts the learner's work-dir confs over the pristine repo confs.
+# Compose merges volumes by container target path, so these replace the base
+# stack's mounts. SYSLINGS_WORK is exported by the syslings binary.
+services:
+  nginx-round-robin:
+    volumes:
+      - ${SYSLINGS_WORK}/round_robin.conf:/etc/nginx/conf.d/default.conf:ro
+  nginx-least-conn:
+    volumes:
+      - ${SYSLINGS_WORK}/least_conn.conf:/etc/nginx/conf.d/default.conf:ro
+  nginx-geo-env:
+    volumes:
+      - ${SYSLINGS_WORK}/geo_env_based.conf:/etc/nginx/conf.d/default.conf:ro
+  nginx-consistent-hash:
+    volumes:
+      - ${SYSLINGS_WORK}/consistent_hashing.conf:/etc/nginx/conf.d/default.conf:ro
