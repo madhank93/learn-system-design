@@ -347,24 +347,20 @@ just syslings              # from the repo root — opens the exercise picker
 ```
 
 ```text
-🧪 syslings — load-balancing  2/7  stack ● up
+🧪 syslings   stack: ● up · load-balancing
 
-   ✓ ✓  01  All aboard — meet the stack
-   ✓ ✓  02  Round robin plays favorites
-▶ ▸ ◐  03  least_conn.conf is lying
-   ◌  04  Sticky sessions that aren't
-   ◌  05  Lost in geo-translation
-   ◌  06  The black-hole timeout
-   ◌  07  Bring server2 home
-
-The "least connections" balancer is not counting connections. Make it.
-📁 edit: work/load-balancing/least_conn.conf
-
-  ✗ two servers are busy, yet the quick requests spread evenly —
-    this balancer isn't counting connections (max on one server = 3/9, want ≥6)
-💡 With no directive, an nginx upstream defaults to round robin.
-
-⏎ play  h hint  e edit  r reset  s solution  n next  u/d stack  ? help  q quit   watching 03_least_conn…
+╭──────────────────────────────────╮ ╭───────────────────────────────────────╮
+│ load-balancing 2/7               │ │ least_conn.conf is lying              │
+│  ✓ 01 All aboard        ◇scenario│ │                                       │
+│  ✓ 02 Round robin plays f… ✎fix  │ │ ✗ two servers are busy, yet the quick │
+│ ▸◐ 03 least_conn.conf is … ✎fix  │ │   requests spread evenly (3/9, want   │
+│  ◌ 04 Sticky sessions tha… ✎fix  │ │   ≥6 on the idle server)              │
+│  ◌ 05 Lost in geo-transla… ✎fix  │ │                                       │
+│  ◌ 06 The black-hole time… ✎fix  │ │ 💡 With no directive, an nginx        │
+│  ◌ 07 Bring server2 home ◇scenario│ │   upstream defaults to round robin.   │
+╰──────────────────────────────────╯ ╰───────────────────────────────────────╯
+↵ play · h hint · e edit · r reset · s solution · n next · u up · d down · ? help · q quit
+watching load-balancing/03_least_conn — save to re-check
 ```
 
 What you'll debug, in order:

@@ -224,53 +224,59 @@ func interactive(preselect string) error {
 		})
 	}
 
-	// The active topic's layout and stack, set by the boot hook. The TUI only
-	// runs checks/setups after a successful boot, so these are always set by
-	// the time the other hooks fire.
-	var active layout
+	// The active topic's stack + watcher, swapped by the boot hook. The TUI
+	// only fires topic-scoped hooks for the booted topic.
 	var activeStack *stack.Stack
 	var watcher *watch.Watcher
 	var p *tea.Program
 
 	hooks := tui.Hooks{
-		CheckPath: func(ex exercise.Exercise) string { return filepath.Join(active.exercisesDir, ex.Check) },
-		WorkDir:   func() string { return active.workDir },
-		RunSetup:  func(ex exercise.Exercise) error { return runScriptQuiet(active, ex.Setup) },
-		ResetFile: func(ex exercise.Exercise) error {
+		CheckPath: func(topic string, ex exercise.Exercise) string {
+			return filepath.Join(lays[topic].exercisesDir, ex.Check)
+		},
+		WorkDir:  func(topic string) string { return lays[topic].workDir },
+		RunSetup: func(topic string, ex exercise.Exercise) error { return runScriptQuiet(lays[topic], ex.Setup) },
+		ResetFile: func(topic string, ex exercise.Exercise) error {
 			if ex.File == "" {
 				return nil
 			}
-			return seed(active, []exercise.Exercise{ex}, map[string]bool{ex.ID: true})
+			return seed(lays[topic], []exercise.Exercise{ex}, map[string]bool{ex.ID: true})
 		},
 		StackDown: func() error {
+			if watcher != nil {
+				watcher.Close()
+				watcher = nil
+			}
 			if activeStack == nil {
 				return nil
 			}
-			return activeStack.Down(context.Background())
+			s := activeStack
+			activeStack = nil
+			return s.Down(context.Background())
 		},
-		ApplySolution: func(ex exercise.Exercise) error {
+		ApplySolution: func(topic string, ex exercise.Exercise) error {
+			lay := lays[topic]
 			if ex.Type == exercise.TypeFix {
-				sol := filepath.Join(active.exercisesDir, ex.ID, "solution", ex.File)
-				if err := copyFile(sol, filepath.Join(active.workDir, ex.File)); err != nil {
+				sol := filepath.Join(lay.exercisesDir, ex.ID, "solution", ex.File)
+				if err := copyFile(sol, filepath.Join(lay.workDir, ex.File)); err != nil {
 					return err
 				}
 			}
-			if solScript := filepath.Join(active.exercisesDir, ex.ID, "solution.sh"); fileExists(solScript) {
-				return runScriptQuiet(active, filepath.Join(ex.ID, "solution.sh"))
+			if solScript := filepath.Join(lay.exercisesDir, ex.ID, "solution.sh"); fileExists(solScript) {
+				return runScriptQuiet(lay, filepath.Join(ex.ID, "solution.sh"))
 			}
 			return nil
 		},
-		EditorCmd: func(ex exercise.Exercise) *exec.Cmd {
+		EditorCmd: func(topic string, ex exercise.Exercise) *exec.Cmd {
 			editor := os.Getenv("EDITOR")
 			if editor == "" || ex.File == "" {
 				return nil
 			}
-			return exec.Command(editor, filepath.Join(active.workDir, ex.File))
+			return exec.Command(editor, filepath.Join(lays[topic].workDir, ex.File))
 		},
 		BootTopic: func(name string) error {
 			lay := lays[name]
-			exs := entriesFor(entries, name)
-			if err := seed(lay, exs, nil); err != nil {
+			if err := seed(lay, entriesFor(entries, name), nil); err != nil {
 				return err
 			}
 			setStackEnv(lay)
@@ -291,13 +297,13 @@ func interactive(preselect string) error {
 					p.Send(tui.WatchMsg{})
 				}
 			}()
-			active, activeStack, watcher = lay, s, w
+			activeStack, watcher = s, w
 			return nil
 		},
 	}
 
-	m := tui.NewPicker(entries, preselect).Wire(hooks)
-	p = tea.NewProgram(m)
+	m := tui.New(entries, preselect).Wire(hooks)
+	p = tea.NewProgram(m, tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {
 		return err
