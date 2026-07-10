@@ -242,6 +242,31 @@ func interactive(preselect string) error {
 			}
 			return seed(active, []exercise.Exercise{ex}, map[string]bool{ex.ID: true})
 		},
+		StackDown: func() error {
+			if activeStack == nil {
+				return nil
+			}
+			return activeStack.Down(context.Background())
+		},
+		ApplySolution: func(ex exercise.Exercise) error {
+			if ex.Type == exercise.TypeFix {
+				sol := filepath.Join(active.exercisesDir, ex.ID, "solution", ex.File)
+				if err := copyFile(sol, filepath.Join(active.workDir, ex.File)); err != nil {
+					return err
+				}
+			}
+			if solScript := filepath.Join(active.exercisesDir, ex.ID, "solution.sh"); fileExists(solScript) {
+				return runScriptQuiet(active, filepath.Join(ex.ID, "solution.sh"))
+			}
+			return nil
+		},
+		EditorCmd: func(ex exercise.Exercise) *exec.Cmd {
+			editor := os.Getenv("EDITOR")
+			if editor == "" || ex.File == "" {
+				return nil
+			}
+			return exec.Command(editor, filepath.Join(active.workDir, ex.File))
+		},
 		BootTopic: func(name string) error {
 			lay := lays[name]
 			exs := entriesFor(entries, name)

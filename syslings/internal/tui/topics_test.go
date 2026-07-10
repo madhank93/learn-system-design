@@ -9,12 +9,16 @@ import (
 	"github.com/madhank93/learn-system-design/syslings/internal/exercise"
 )
 
+func key(s string) tea.KeyMsg {
+	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s)}
+}
+
 func topicEntries(t *testing.T) []TopicEntry {
 	t.Helper()
 	m := testModel(t)
 	return []TopicEntry{
 		{Name: "load-balancing", Desc: "Nginx algorithms, health checks, failover", Exs: m.Exs, St: m.St, StatePath: m.StatePath},
-		{Name: "caching", Desc: "Hit ratios, TTLs, stampedes", Exs: m.Exs, St: &exercise.State{Completed: map[string]bool{}}, StatePath: m.StatePath},
+		{Name: "caching", Desc: "Hit ratios, TTLs, stampedes", Exs: m.Exs, St: &exercise.State{Completed: map[string]bool{}, Attempted: map[string]bool{}}, StatePath: m.StatePath},
 	}
 }
 
@@ -41,13 +45,12 @@ func TestPreselectSkipsTopicPickerAndBoots(t *testing.T) {
 	if !m.Booting {
 		t.Fatal("want booting state")
 	}
-	cmd := m.Init()
-	if cmd == nil {
+	if m.Init() == nil {
 		t.Fatal("want boot command on init")
 	}
 }
 
-func TestTopicSelectionBootsThenShowsExercisePicker(t *testing.T) {
+func TestTopicSelectionBootsThenShowsHome(t *testing.T) {
 	m := stubBoot(NewPicker(topicEntries(t), ""))
 	next, _ := m.Update(key("j"))
 	m2 := next.(Model)
@@ -67,8 +70,11 @@ func TestTopicSelectionBootsThenShowsExercisePicker(t *testing.T) {
 	}
 	next, _ = m3.Update(BootDoneMsg{})
 	m4 := next.(Model)
-	if m4.Booting || !m4.ListOpen {
-		t.Fatal("boot completion must land on the exercise picker")
+	if m4.Booting || !m4.StackUp {
+		t.Fatal("boot completion must land on the exercise home with the stack up")
+	}
+	if !strings.Contains(m4.View(), "stack ● up") {
+		t.Fatal("home view must show stack status")
 	}
 }
 
@@ -79,9 +85,8 @@ func TestBootFailureSurfaces(t *testing.T) {
 	if m2.BootErr == nil {
 		t.Fatal("boot error must be kept for the view")
 	}
-	v := m2.View()
-	if !strings.Contains(v, "fake docker explosion") {
-		t.Fatalf("view must show boot error:\n%s", v)
+	if !strings.Contains(m2.View(), "fake docker explosion") {
+		t.Fatalf("view must show boot error:\n%s", m2.View())
 	}
 }
 
@@ -95,14 +100,18 @@ func TestTopicPickerViewShowsDescriptions(t *testing.T) {
 	}
 }
 
-func TestExercisePickerShowsDescOfHighlighted(t *testing.T) {
+func TestStackDownKey(t *testing.T) {
 	m := testModel(t)
-	m.Exs[1].Desc = "One server hogs every request."
-	m.ListOpen = true
-	m.ListCursor = 1
-	v := m.View()
-	if !strings.Contains(v, "One server hogs every request.") {
-		t.Fatalf("exercise picker must show highlighted exercise's desc:\n%s", v)
+	m.stackDown = func() tea.Cmd { return func() tea.Msg { return DownDoneMsg{} } }
+	m.Playing = 1
+	next, cmd := m.Update(key("d"))
+	if cmd == nil {
+		t.Fatal("d with stack up must schedule stack down")
+	}
+	next, _ = next.(Model).Update(DownDoneMsg{})
+	m2 := next.(Model)
+	if m2.StackUp || m2.Playing != -1 {
+		t.Fatal("down completion must mark stack down and stop playing")
 	}
 }
 

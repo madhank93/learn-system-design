@@ -9,15 +9,18 @@ import (
 )
 
 // State is the learner's progress, persisted as JSON in the work dir.
+// Attempted marks exercises that have failed at least one check — the ◐
+// marker in the TUI list.
 type State struct {
 	Completed map[string]bool `json:"completed"`
+	Attempted map[string]bool `json:"attempted,omitempty"`
 }
 
 // LoadState reads progress from path; a missing file is a fresh start.
 func LoadState(path string) (*State, error) {
 	raw, err := os.ReadFile(path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return &State{Completed: map[string]bool{}}, nil
+		return &State{Completed: map[string]bool{}, Attempted: map[string]bool{}}, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("read state %s: %w", path, err)
@@ -28,6 +31,9 @@ func LoadState(path string) (*State, error) {
 	}
 	if st.Completed == nil {
 		st.Completed = map[string]bool{}
+	}
+	if st.Attempted == nil {
+		st.Attempted = map[string]bool{}
 	}
 	return &st, nil
 }
