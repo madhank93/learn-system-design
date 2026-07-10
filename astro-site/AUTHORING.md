@@ -50,7 +50,6 @@ Difficulty → variant: **Beginner** = `success`, **Intermediate** = `caution`, 
 | Callouts | `:::note` / `:::caution` / `:::tip` | Starlight built-in |
 | Prev/next path | `<TopicNav prev={…} next={…} />` | `components/TopicNav.astro` |
 | Link to runnable code | `<RunCode path="<category>/<dir>" recipe="<topic>" />` | `components/RunCode.astro` — links the GitHub source + shows `cd high-level-design` then `just <recipe>-up / -test / -down` |
-| Guided-lab section | **`<LabSteps steps={[…]} />`** | `components/LabSteps.astro` — Read → Sim → Run → **Lab** breakpoint. Each step: `{ title, run?, observe?, check?, expect? }`. Steps MUST mirror the topic's `high-level-design/<dir>/lab/check.sh` cases 1:1 — the `check` field is `just <topic>-lab-check <n>` and `expect` quotes the ✓ line the script prints. |
 
 **Rules**
 - Static, non-interactive diagram → **mermaid fence in `<Figure>`** (never a runtime component). Build-time rendering keeps the page zero-JS.
@@ -99,27 +98,41 @@ Slug = Starlight content slug (`hld/<file>`). Also add the page to the sidebar i
 - [ ] Add `<RunCode path="…" recipe="…" />` in `## This implementation`. `path` = current `high-level-design/<category>/<dir>` (verify it exists — dirs were renumbered); `recipe` = the justfile recipe base in `high-level-design/justfile` (the `<recipe>-up/-test/-down` set).
 - [ ] Add `<TopicNav>` + register the page in `astro.config.mjs` sidebar.
 - [ ] `npm test` (sim engines) and `npm run build` clean; spot-check light + dark + mobile.
-- [ ] Lab: `lab/check.sh` + `lab/verify.sh` + justfile recipes + `<LabSteps>` section (see "Adding a lab to a topic")
+- [ ] Lab: syslings exercise set under `syslings/exercises/<topic>/` + a `## Lab: fix the broken <thing>` section on the page (see "Adding syslings exercises to a topic")
 
-## Adding a lab to a topic
+## Adding syslings exercises to a topic
 
-1. Design 4–6 steps: each one is *do something real* (kill a container, flood
-   an endpoint) → *observe* → *scripted checkpoint*. First step is always
-   `just <topic>-up`, last is `just <topic>-down`.
-2. Write `high-level-design/<dir>/lab/check.sh` — source
-   `lab-lib/check-helpers.sh`, one `stepN()` function per step, plus a `steps`
-   listing. Every failure path calls `bad "<what>" "<hint>"`.
-3. Verify BOTH states of every step: run the check before doing the step
-   (must ✗ with a useful hint) and after (must ✓). No checkpoint ships
-   verified in only one direction.
-4. Write `high-level-design/<dir>/lab/verify.sh` — happy-path smoke driving
-   up → all checks → down. Wire it into `lab-verify-all` in the justfile.
-   Mind timing: nginx passive health checks hold a recovered server out for
-   ~10s (`fail_timeout`), so post-recovery checks need an 11s wait.
-5. Add justfile recipes `<topic>-lab` and `<topic>-lab-check`.
-6. Add the `<LabSteps>` section to the mdx page (import from
-   `../../../components/LabSteps.astro`), cross-referencing the sim where the
-   lab repeats an experiment the sim previews.
+syslings (`syslings/`) is the repo's rustlings-style trainer: broken configs
+mounted into the live Docker stack, file-watch re-checking, progressive hints.
+
+1. Design 5–8 exercises, each teaching ONE failure: mostly `fix` type (ship a
+   deliberately broken config the learner edits) plus a couple of `scenario`
+   types (a `setup.sh` injects a live fault the learner must remediate).
+2. Create `syslings/exercises/<topic>/`: `exercises.yaml` (ordered; see
+   load-balancing for the schema), `compose.override.yml` (mounts
+   `${SYSLINGS_WORK}/<file>` over the stack's pristine configs — compose merges
+   volumes by container target path), and `common.sh` (source
+   `lab-lib/check-helpers.sh`, define `dc`/`reload`).
+3. Per exercise dir: broken template (`<file>`), `solution/<file>` (or
+   `solution.sh` for scenarios — used by `syslings verify` to prove
+   solvability in CI), `check.sh`, hints in `exercises.yaml`.
+4. Register the topic in `syslings/main.go`'s `topics` map (compose dir +
+   probe URL).
+5. Verify BOTH states of every exercise: broken template must ✗ with a useful
+   story, solution must ✓ (`syslings verify <topic>` covers the ✓ side).
+6. Gotchas learned on the pilot:
+   - `docker compose stop <svc>` removes its DNS entry — any later
+     `nginx -s reload` then FAILS conf validation ("host not found in
+     upstream"). Faults that must survive reloads should use a black-hole IP
+     in the pool (e.g. `10.255.255.1`) instead of stopping a container.
+   - nginx passive health holds a failed server out ~10s (`fail_timeout`);
+     recovery checks need to account for it.
+   - `reload` must surface `nginx -t` errors, or learners debug stale configs.
+7. Add the `## Lab: fix the broken <thing>` section to the topic's mdx page:
+   run commands, a short TUI transcript in a `text` fence, and the ordered
+   exercise list. Cross-reference the sim where an exercise has a sim twin.
+8. Add/extend justfile recipes if the topic needs them (`syslings` and
+   `syslings-verify` take a topic argument already).
 
 ## Gotchas (learned the hard way)
 

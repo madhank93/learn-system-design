@@ -9,7 +9,6 @@ import TopicNav from '../../../components/TopicNav.astro';
 import RunCode from '../../../components/RunCode.astro';
 import LoadBalancerFlow from '../../../components/LoadBalancerFlow';
 import LoadBalancerSim from '../../../components/LoadBalancerSim';
-import LabSteps from '../../../components/LabSteps.astro';
 
 <Badge text="Beginner" variant="success" /> <Badge text="Has code" variant="note" /> <Badge text="Docker required" variant="note" />
 
@@ -334,56 +333,46 @@ http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 | `nginx-geo-env` | Header-mapped regional pools on :8083 |
 | `nginx-consistent-hash` | Cookie-hashed sticky pool on :8084 |
 
-## Lab: break it and watch it heal
+## Lab: fix the broken load balancer
 
-You just watched the simulator evict a dead server — now do it to a real Nginx.
-Run every command from `high-level-design/`; each checkpoint tells you exactly
-what passed or what to fix. (You already killed servers in the simulator above
-with the ⏻ buttons — this is the same experiment against real containers.)
+Reading about algorithms is one thing — debugging them is how they stick.
+**syslings** is this repo's rustlings-style trainer: it boots the real
+Nginx + Go stack in Docker with deliberately broken configs mounted, then
+watches your edits. Save a file and the checkpoint reruns against live
+traffic; go green and it advances to the next exercise.
 
-<LabSteps steps={[
-  {
-    title: 'Start the stack',
-    run: 'just load-balancing-up',
-    observe: 'Four Nginx load balancers come up — one per algorithm — on ports 8081–8084, sharing the same three Go servers.',
-    check: 'just load-balancing-lab-check 1',
-    expect: 'all four load balancers up (:8081–:8084)',
-  },
-  {
-    title: 'Watch round robin take turns',
-    run: 'for i in {1..6}; do curl -s localhost:8081; done',
-    observe: 'Responses rotate 1 → 2 → 3 → 1 → 2 → 3. No server is favored; none is spared.',
-    check: 'just load-balancing-lab-check 2',
-    expect: "each server took its turn — that's the rotating counter",
-  },
-  {
-    title: 'Kill a server mid-traffic',
-    run: 'cd networking-and-edge/2.1_load_balancer && docker compose stop server2 && cd ../..',
-    observe: 'Curl :8081 again — every request still succeeds. Nginx marks server2 failed on first error and retries the next server; clients never see it.',
-    check: 'just load-balancing-lab-check 3',
-    expect: 'server2 stopped, 20/20 requests still succeeded · nginx evicted it (0/20 requests hit Server 2)',
-  },
-  {
-    title: 'Make least-connections earn its name',
-    run: 'cd networking-and-edge/2.1_load_balancer && docker compose start server2 && cd ../..\nsleep 11   # nginx holds a recovered server out of rotation for ~10s\ncurl -s "localhost:8082/?sleep=6s" &\ncurl -s "localhost:8082/?sleep=6s" &\nsleep 1; for i in {1..9}; do curl -s localhost:8082; done',
-    observe: 'Two servers are stuck serving 6-second requests. Least-conn funnels the quick requests to the idle one. Try the same on :8081 — round robin keeps feeding the busy servers.',
-    check: 'just load-balancing-lab-check 4',
-    expect: "quick requests avoided the two busy servers — that's least connections",
-  },
-  {
-    title: 'Pin a session with consistent hashing',
-    run: 'for i in {1..5}; do curl -s --cookie "session_id=alice" localhost:8084; done',
-    observe: 'Alice lands on the same server every time; a different cookie may land elsewhere. Same input, same hash, same server.',
-    check: 'just load-balancing-lab-check 5',
-    expect: "alice pinned to one server across 5 requests · bob pinned too (possibly a different server — that's the hash)",
-  },
-  {
-    title: 'Tear down',
-    run: 'just load-balancing-down',
-    check: 'just load-balancing-lab-check 6',
-    expect: 'stack is down — lab complete 🎉',
-  },
-]} />
+```bash
+cd syslings && go run . load-balancing
+# or: cd high-level-design && just syslings
+```
+
+```text
+🧪 syslings — load-balancing  2/7
+
+Exercise 03: least_conn.conf is lying
+📁 edit: work/load-balancing/least_conn.conf
+
+  ✗ two servers are busy, yet the quick requests spread evenly —
+    this balancer isn't counting connections (max on one server = 3/9, want ≥6)
+
+💡 With no directive, an nginx upstream defaults to round robin.
+
+[h]int  [r]eset  [s]kip  [q]uit   watching…
+```
+
+What you'll debug, in order:
+
+1. **All aboard** — meet the four balancers (:8081–:8084)
+2. **Round robin plays favorites** — one server is hogging every request
+3. **least_conn.conf is lying** — the "least connections" balancer isn't counting
+4. **Sticky sessions that aren't** — pinned to the wrong key entirely
+5. **Lost in geo-translation** — header-less traffic dumped into one region's pool
+6. **The black-hole timeout** — a decommissioned VM still in the pool (this repo hit this exact bug for real)
+7. **Bring server2 home** — recovery, and why eviction has a memory
+
+Each exercise has a simulator twin above — break it in the sim first, then fix
+it for real. Progress persists in `syslings/work/`; quit anytime, resume later.
+Hints are progressive (`h`), and `syslings reset <id>` restores a mangled file.
 
 ## Further reading
 

@@ -1,10 +1,10 @@
 ---
 title: Learn System Design
-description: System design concepts you can read, simulate in the browser, run in Docker, and break in a guided lab.
+description: System design concepts you can read, simulate in the browser, run in Docker, and debug rustlings-style with syslings.
 template: splash
 hero:
   title: Learn System Design by Breaking Things
-  tagline: Every topic is a four-step loop — read the concept, play the interactive simulation, run the real stack in Docker, then follow a guided lab that makes you break it and watch it heal.
+  tagline: Every topic is a four-step loop — read the concept, play the interactive simulation, run the real stack in Docker, then fix its deliberately broken configs rustlings-style until the checks go green.
   actions:
     - text: Start with Load Balancing
       link: /hld/load-balancing/
@@ -19,14 +19,14 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## The learning loop
 
-**📖 Read** the concept → **🎛 Simulate** it live in your browser → **🐳 Run** the real Go + Nginx + Docker stack → **🧪 Lab**: kill servers, flood caches, trip breakers — with scripted checkpoints (`just <topic>-lab-check <n>`) telling you exactly what passed.
+**📖 Read** the concept → **🎛 Simulate** it live in your browser → **🐳 Run** the real Go + Nginx + Docker stack → **🧪 Lab**: fix deliberately broken configs against live traffic with **syslings**, this repo's rustlings-style trainer — save a file, the check reruns, go green, advance.
 
 ## The path
 
 <CardGrid>
   <Card title="1 · Load Balancing" icon="setting">
-    Round robin, least connections, consistent hashing — then stop a container
-    and watch Nginx evict it with zero failed requests.
+    Round robin, least connections, consistent hashing — then debug seven
+    deliberately broken balancers, rustlings-style, against live traffic.
     [Read → Sim → Run → Lab](/hld/load-balancing/)
   </Card>
   <Card title="2 · Caching" icon="seti:db">
