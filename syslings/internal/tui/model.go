@@ -30,7 +30,18 @@ type (
 	// EnterMsg starts (or restarts) the current exercise: scenario setup
 	// first if needed, then a check.
 	EnterMsg struct{}
+	// BootDoneMsg reports the topic stack coming up (seed + compose up).
+	BootDoneMsg struct{ Err error }
 )
+
+// TopicEntry is one selectable topic in the topic picker.
+type TopicEntry struct {
+	Name      string
+	Desc      string
+	Exs       []exercise.Exercise
+	St        *exercise.State
+	StatePath string
+}
 
 const checkTimeout = 60 * time.Second
 
@@ -47,22 +58,32 @@ type Model struct {
 	Quitting   bool
 	SetupErr   error
 
-	// exercise picker (open on launch; `l` reopens)
+	// exercise picker (open after boot; `l` reopens)
 	ListOpen   bool
 	ListCursor int
+
+	// topic picker (open on launch unless a topic was preselected)
+	Topics      []TopicEntry
+	TopicOpen   bool
+	TopicCursor int
+	Booting     bool
+	BootErr     error
 
 	// exec seams — replaced by stubs in tests.
 	check     func(ex exercise.Exercise) tea.Cmd
 	setup     func(ex exercise.Exercise) tea.Cmd
 	resetFile func(ex exercise.Exercise) error
+	bootTopic func(name string) tea.Cmd
 }
 
-// Hooks are the real-world side effects wired in by main.
+// Hooks are the real-world side effects wired in by main. Paths resolve
+// against the ACTIVE topic (set when BootTopic succeeds).
 type Hooks struct {
 	CheckPath func(ex exercise.Exercise) string // absolute path to check.sh
-	WorkDir   string
+	WorkDir   func() string                     // active topic's work dir
 	RunSetup  func(ex exercise.Exercise) error
 	ResetFile func(ex exercise.Exercise) error
+	BootTopic func(name string) error // seed + compose up + watcher
 }
 
 func New(topic string, exs []exercise.Exercise, st *exercise.State, statePath string) Model {
@@ -83,23 +104,68 @@ func New(topic string, exs []exercise.Exercise, st *exercise.State, statePath st
 	}
 }
 
+// NewPicker builds the multi-topic entry point: topic picker first (unless a
+// topic was preselected on the CLI), Docker boot on selection, then the
+// exercise picker. Exercise/state data for every topic is preloaded.
+func NewPicker(topics []TopicEntry, preselect string) Model {
+	m := Model{
+		Topics:    topics,
+		TopicOpen: true,
+		resetFile: func(exercise.Exercise) error { return nil },
+	}
+	for i, t := range topics {
+		if t.Name == preselect {
+			m = m.activateTopic(i)
+			break
+		}
+	}
+	return m
+}
+
+// activateTopic loads a topic's data into the model and moves to booting.
+func (m Model) activateTopic(i int) Model {
+	t := m.Topics[i]
+	m.Topic = t.Name
+	m.Exs = t.Exs
+	m.St = t.St
+	m.StatePath = t.StatePath
+	cur := exercise.NextIncomplete(m.Exs, m.St)
+	if cur < 0 {
+		cur = 0
+	}
+	m.Cur = cur
+	m.ListCursor = cur
+	m.TopicOpen = false
+	m.Booting = true
+	m.BootErr = nil
+	return m
+}
+
 // Wire attaches real exec side effects.
 func (m Model) Wire(h Hooks) Model {
 	m.check = func(ex exercise.Exercise) tea.Cmd {
 		return func() tea.Msg {
-			return CheckMsg{Res: runner.Run(context.Background(), h.CheckPath(ex), h.WorkDir, checkTimeout)}
+			return CheckMsg{Res: runner.Run(context.Background(), h.CheckPath(ex), h.WorkDir(), checkTimeout)}
 		}
 	}
 	m.setup = func(ex exercise.Exercise) tea.Cmd {
 		return func() tea.Msg { return SetupMsg{Err: h.RunSetup(ex)} }
 	}
 	m.resetFile = h.ResetFile
+	if h.BootTopic != nil {
+		m.bootTopic = func(name string) tea.Cmd {
+			return func() tea.Msg { return BootDoneMsg{Err: h.BootTopic(name)} }
+		}
+	}
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	if m.ListOpen {
-		return nil // wait for the learner to pick an exercise
+	if m.Booting && m.bootTopic != nil {
+		return m.bootTopic(m.Topic)
+	}
+	if m.TopicOpen || m.ListOpen {
+		return nil // wait for the learner to pick
 	}
 	return func() tea.Msg { return EnterMsg{} }
 }
@@ -113,6 +179,15 @@ func (m Model) current() exercise.Exercise {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+
+	case BootDoneMsg:
+		m.Booting = false
+		if msg.Err != nil {
+			m.BootErr = msg.Err
+			return m, nil
+		}
+		m.ListOpen = true
+		return m, nil
 
 	case EnterMsg:
 		// runs the current exercise even if already completed — the picker
@@ -167,6 +242,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) key(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.TopicOpen {
+		return m.topicKey(msg)
+	}
 	if m.ListOpen {
 		return m.pickerKey(msg)
 	}
@@ -195,6 +273,28 @@ func (m Model) key(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg { return EnterMsg{} }
 		}
 		return m, nil
+	}
+	return m, nil
+}
+
+func (m Model) topicKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "q", "ctrl+c":
+		m.Quitting = true
+		return m, tea.Quit
+	case "up", "k":
+		if m.TopicCursor > 0 {
+			m.TopicCursor--
+		}
+	case "down", "j":
+		if m.TopicCursor < len(m.Topics)-1 {
+			m.TopicCursor++
+		}
+	case "enter":
+		m = m.activateTopic(m.TopicCursor)
+		if m.bootTopic != nil {
+			return m, m.bootTopic(m.Topic)
+		}
 	}
 	return m, nil
 }

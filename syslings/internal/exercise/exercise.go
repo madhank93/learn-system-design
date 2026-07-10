@@ -22,6 +22,7 @@ const (
 type Exercise struct {
 	ID    string   `yaml:"id"`
 	Title string   `yaml:"title"`
+	Desc  string   `yaml:"desc"` // one-liner shown in the exercise picker
 	Type  Type     `yaml:"type"`
 	File  string   `yaml:"file"`  // fix only: work file the learner edits
 	Check string   `yaml:"check"` // path to check.sh, relative to the exercises dir

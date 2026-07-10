@@ -37,7 +37,7 @@ lab-verify-all:
 
 # syslings — rustlings-style interactive exercises (fix broken configs against
 # the live stack, watch mode, hints). Runs the TUI for a topic.
-syslings topic="load-balancing":
+syslings *topic:
     cd ../syslings && go run . {{topic}}
 
 # CI: prove every syslings exercise is solvable (seeds solutions, runs checks).

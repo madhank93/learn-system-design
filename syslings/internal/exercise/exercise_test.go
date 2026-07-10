@@ -15,6 +15,7 @@ const validYAML = `
     - "curl the four ports"
 - id: 02_round_robin
   title: "Round robin plays favorites"
+  desc: "One server hogs every request — restore the fair rotation."
   type: fix
   file: round_robin.conf
   check: 02_round_robin/check.sh
@@ -52,6 +53,9 @@ func TestLoadParsesOrderedExercises(t *testing.T) {
 	}
 	if len(exs[1].Hints) != 2 {
 		t.Fatalf("hints wrong: %d", len(exs[1].Hints))
+	}
+	if exs[1].Desc == "" {
+		t.Fatal("desc not parsed")
 	}
 }
 

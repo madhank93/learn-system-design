@@ -24,17 +24,22 @@ import (
 	"github.com/madhank93/learn-system-design/syslings/internal/watch"
 )
 
-// topics maps a topic name to its compose dir (relative to repo root) and a
-// probe URL that answers once the stack is up.
+// topics maps a topic name to its compose dir (relative to repo root), a
+// probe URL that answers once the stack is up, and a picker description.
 var topics = map[string]struct {
 	dir   string
 	probe string
+	desc  string
 }{
 	"load-balancing": {
 		dir:   "high-level-design/networking-and-edge/2.1_load_balancer",
 		probe: "http://localhost:8081",
+		desc:  "Nginx algorithms live: fair rotation, least-conn, sticky sessions, geo pools, black-hole timeouts",
 	},
 }
+
+// topicOrder fixes the picker order (maps don't).
+var topicOrder = []string{"load-balancing"}
 
 type layout struct {
 	repoRoot     string
@@ -54,11 +59,12 @@ func main() {
 }
 
 func run(args []string) error {
-	mode, topic := "tui", "load-balancing"
+	mode, topic := "tui", "" // empty topic → the TUI's topic picker
 	switch {
 	case len(args) == 0:
 	case args[0] == "verify":
 		mode = "verify"
+		topic = "load-balancing"
 		if len(args) > 1 {
 			topic = args[1]
 		}
@@ -67,11 +73,16 @@ func run(args []string) error {
 			return fmt.Errorf("usage: syslings reset <exercise-id> [topic]")
 		}
 		mode = "reset:" + args[1]
+		topic = "load-balancing"
 		if len(args) > 2 {
 			topic = args[2]
 		}
 	default:
 		topic = args[0]
+	}
+
+	if mode == "tui" {
+		return interactive(topic)
 	}
 
 	lay, err := resolveLayout(topic)
@@ -82,20 +93,20 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
+	setStackEnv(lay)
 
-	// scripts (check.sh / setup.sh / solution.sh) find the stack through env
+	if mode == "verify" {
+		return verify(lay, exs)
+	}
+	return resetExercise(lay, exs, mode[6:])
+}
+
+// setStackEnv exports the paths check.sh / setup.sh / solution.sh use to
+// address the compose stack.
+func setStackEnv(lay layout) {
 	os.Setenv("SYSLINGS_TOPIC_DIR", lay.topicDir)
 	os.Setenv("SYSLINGS_OVERRIDE", lay.overridePath)
 	os.Setenv("SYSLINGS_WORK", lay.workDir)
-
-	switch {
-	case mode == "verify":
-		return verify(lay, exs)
-	case len(mode) > 6 && mode[:6] == "reset:":
-		return resetExercise(lay, exs, mode[6:])
-	default:
-		return interactive(lay, exs)
-	}
 }
 
 // resolveLayout finds the repo root (dir containing go.work) upward from cwd
@@ -181,55 +192,108 @@ func runScript(lay layout, rel string) error {
 	return cmd.Run()
 }
 
-func interactive(lay layout, exs []exercise.Exercise) error {
-	if err := seed(lay, exs, nil); err != nil {
-		return err
-	}
-	st, err := exercise.LoadState(lay.statePath)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("🐳 starting the", lay.topic, "stack (first run builds images)…")
-	s := newStack(lay)
-	ctx := context.Background()
-	if err := s.Up(ctx); err != nil {
-		return err
-	}
-	if err := s.WaitUp(ctx, topics[lay.topic].probe, 60*time.Second); err != nil {
-		return err
+// interactive runs the TUI: topic picker (unless preselected), Docker boot on
+// selection, then the exercise loop. All topics' exercises/state are
+// preloaded; only the chosen topic's stack is booted.
+func interactive(preselect string) error {
+	if preselect != "" {
+		if _, ok := topics[preselect]; !ok {
+			return fmt.Errorf("unknown topic %q (available: %v)", preselect, topicOrder)
+		}
 	}
 
-	m := tui.New(lay.topic, exs, st, lay.statePath).Wire(tui.Hooks{
-		CheckPath: func(ex exercise.Exercise) string { return filepath.Join(lay.exercisesDir, ex.Check) },
-		WorkDir:   lay.workDir,
-		RunSetup:  func(ex exercise.Exercise) error { return runScriptQuiet(lay, ex.Setup) },
+	entries := make([]tui.TopicEntry, 0, len(topicOrder))
+	lays := make(map[string]layout, len(topicOrder))
+	for _, name := range topicOrder {
+		lay, err := resolveLayout(name)
+		if err != nil {
+			return err
+		}
+		exs, err := exercise.Load(filepath.Join(lay.exercisesDir, "exercises.yaml"))
+		if err != nil {
+			return err
+		}
+		st, err := exercise.LoadState(lay.statePath)
+		if err != nil {
+			return err
+		}
+		lays[name] = lay
+		entries = append(entries, tui.TopicEntry{
+			Name: name, Desc: topics[name].desc,
+			Exs: exs, St: st, StatePath: lay.statePath,
+		})
+	}
+
+	// The active topic's layout and stack, set by the boot hook. The TUI only
+	// runs checks/setups after a successful boot, so these are always set by
+	// the time the other hooks fire.
+	var active layout
+	var activeStack *stack.Stack
+	var watcher *watch.Watcher
+	var p *tea.Program
+
+	hooks := tui.Hooks{
+		CheckPath: func(ex exercise.Exercise) string { return filepath.Join(active.exercisesDir, ex.Check) },
+		WorkDir:   func() string { return active.workDir },
+		RunSetup:  func(ex exercise.Exercise) error { return runScriptQuiet(active, ex.Setup) },
 		ResetFile: func(ex exercise.Exercise) error {
 			if ex.File == "" {
 				return nil
 			}
-			return seed(lay, []exercise.Exercise{ex}, map[string]bool{ex.ID: true})
+			return seed(active, []exercise.Exercise{ex}, map[string]bool{ex.ID: true})
 		},
-	})
-
-	p := tea.NewProgram(m)
-
-	w, err := watch.New(lay.workDir, 300*time.Millisecond)
-	if err != nil {
-		return err
+		BootTopic: func(name string) error {
+			lay := lays[name]
+			exs := entriesFor(entries, name)
+			if err := seed(lay, exs, nil); err != nil {
+				return err
+			}
+			setStackEnv(lay)
+			s := newStack(lay)
+			ctx := context.Background()
+			if err := s.Up(ctx); err != nil {
+				return err
+			}
+			if err := s.WaitUp(ctx, topics[name].probe, 120*time.Second); err != nil {
+				return err
+			}
+			w, err := watch.New(lay.workDir, 300*time.Millisecond)
+			if err != nil {
+				return err
+			}
+			go func() {
+				for range w.Events() {
+					p.Send(tui.WatchMsg{})
+				}
+			}()
+			active, activeStack, watcher = lay, s, w
+			return nil
+		},
 	}
-	defer w.Close()
-	go func() {
-		for range w.Events() {
-			p.Send(tui.WatchMsg{})
-		}
-	}()
+
+	m := tui.NewPicker(entries, preselect).Wire(hooks)
+	p = tea.NewProgram(m)
 
 	if _, err := p.Run(); err != nil {
 		return err
 	}
-	fmt.Println("🐳 tearing the stack down…")
-	return s.Down(context.Background())
+	if watcher != nil {
+		watcher.Close()
+	}
+	if activeStack != nil {
+		fmt.Println("🐳 tearing the stack down…")
+		return activeStack.Down(context.Background())
+	}
+	return nil
+}
+
+func entriesFor(entries []tui.TopicEntry, name string) []exercise.Exercise {
+	for _, e := range entries {
+		if e.Name == name {
+			return e.Exs
+		}
+	}
+	return nil
 }
 
 // runScriptQuiet is runScript without dumping into the TUI's terminal.
@@ -286,6 +350,13 @@ func verify(lay layout, exs []exercise.Exercise) error {
 			}
 		}
 		res := runner.Run(ctx, filepath.Join(lay.exercisesDir, ex.Check), lay.workDir, 90*time.Second)
+		if !res.Passed {
+			// one retry absorbs fresh-stack startup races; a genuinely
+			// unsolvable exercise fails both attempts
+			fmt.Println("  … first attempt failed, retrying once")
+			time.Sleep(2 * time.Second)
+			res = runner.Run(ctx, filepath.Join(lay.exercisesDir, ex.Check), lay.workDir, 90*time.Second)
+		}
 		fmt.Print(res.Output)
 		if !res.Passed {
 			return fmt.Errorf("%s: solution did not pass its check", ex.ID)

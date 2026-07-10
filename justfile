@@ -8,7 +8,7 @@ list:
 # Rustlings-style hands-on trainer: opens a TUI exercise picker, mounts broken
 # configs into the live Docker stack, re-checks on every save.
 
-syslings topic="load-balancing":
+syslings *topic:
     go run ./syslings {{topic}}
 
 # CI: prove every exercise's solution passes (rebuilds the topic stack)
