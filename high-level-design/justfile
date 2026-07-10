@@ -33,6 +33,17 @@ lab-check dir step:
 # WARNING: tears down and rebuilds each topic's compose stack — don't run mid-lab.
 lab-verify-all:
     @bash networking-and-edge/2.1_load_balancer/lab/verify.sh
+    @just syslings-verify
+
+# syslings — rustlings-style interactive exercises (fix broken configs against
+# the live stack, watch mode, hints). Runs the TUI for a topic.
+syslings topic="load-balancing":
+    cd ../syslings && go run . {{topic}}
+
+# CI: prove every syslings exercise is solvable (seeds solutions, runs checks).
+# WARNING: rebuilds the topic's compose stack — don't run mid-session.
+syslings-verify topic="load-balancing":
+    cd ../syslings && go run . verify {{topic}}
 
 # ── Go unit tests (no Docker needed) ─────────────────────────
 

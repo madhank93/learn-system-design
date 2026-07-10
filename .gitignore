@@ -1,2 +1,11 @@
 website/
 node_modules/
+# Maelstrom binary (downloaded separately)
+high-level-design/distributed-challenges/maelstrom/maelstrom
+# Compiled challenge binaries (built by just dc-build-all)
+high-level-design/distributed-challenges/c[0-9]*/c[0-9]*
+website/static/diagrams/
+# syslings learner work dirs (seeded from exercise templates at runtime)
+syslings/work/
+# Compiled topic server binaries (go build artifacts)
+**/server/server
