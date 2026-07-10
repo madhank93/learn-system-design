@@ -47,6 +47,10 @@ type Model struct {
 	Quitting   bool
 	SetupErr   error
 
+	// exercise picker (open on launch; `l` reopens)
+	ListOpen   bool
+	ListCursor int
+
 	// exec seams — replaced by stubs in tests.
 	check     func(ex exercise.Exercise) tea.Cmd
 	setup     func(ex exercise.Exercise) tea.Cmd
@@ -67,13 +71,15 @@ func New(topic string, exs []exercise.Exercise, st *exercise.State, statePath st
 		cur = 0
 	}
 	return Model{
-		Topic:     topic,
-		Exs:       exs,
-		St:        st,
-		StatePath: statePath,
-		Cur:       cur,
-		Phase:     PhaseChecking,
-		resetFile: func(exercise.Exercise) error { return nil },
+		Topic:      topic,
+		Exs:        exs,
+		St:         st,
+		StatePath:  statePath,
+		Cur:        cur,
+		Phase:      PhaseChecking,
+		ListOpen:   true,
+		ListCursor: cur,
+		resetFile:  func(exercise.Exercise) error { return nil },
 	}
 }
 
@@ -92,6 +98,9 @@ func (m Model) Wire(h Hooks) Model {
 }
 
 func (m Model) Init() tea.Cmd {
+	if m.ListOpen {
+		return nil // wait for the learner to pick an exercise
+	}
 	return func() tea.Msg { return EnterMsg{} }
 }
 
@@ -106,10 +115,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case EnterMsg:
-		if exercise.NextIncomplete(m.Exs, m.St) < 0 {
-			m.Phase = PhaseAllDone
-			return m, nil
-		}
+		// runs the current exercise even if already completed — the picker
+		// lets learners revisit; AllDone is decided when a check passes.
 		ex := m.current()
 		m.HintsShown = 0
 		m.Output = ""
@@ -131,7 +138,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.check(m.current())
 
 	case WatchMsg:
-		if m.Phase == PhaseChecking || m.Phase == PhaseAllDone {
+		if m.ListOpen || m.Phase == PhaseChecking || m.Phase == PhaseAllDone {
 			return m, nil
 		}
 		m.Phase = PhaseChecking
@@ -160,10 +167,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) key(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.ListOpen {
+		return m.pickerKey(msg)
+	}
 	switch msg.String() {
 	case "q", "ctrl+c":
 		m.Quitting = true
 		return m, tea.Quit
+	case "l":
+		m.ListOpen = true
+		m.ListCursor = m.Cur
+		return m, nil
 	case "h":
 		if n := len(m.current().Hints); m.HintsShown < n {
 			m.HintsShown++
@@ -181,6 +195,27 @@ func (m Model) key(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg { return EnterMsg{} }
 		}
 		return m, nil
+	}
+	return m, nil
+}
+
+func (m Model) pickerKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "q", "ctrl+c":
+		m.Quitting = true
+		return m, tea.Quit
+	case "up", "k":
+		if m.ListCursor > 0 {
+			m.ListCursor--
+		}
+	case "down", "j":
+		if m.ListCursor < len(m.Exs)-1 {
+			m.ListCursor++
+		}
+	case "enter", "l":
+		m.ListOpen = false
+		m.Cur = m.ListCursor
+		return m, func() tea.Msg { return EnterMsg{} }
 	}
 	return m, nil
 }

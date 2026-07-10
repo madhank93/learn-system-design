@@ -33,6 +33,24 @@ func (m Model) View() string {
 		styleHeader.Render(fmt.Sprintf("🧪 syslings — %s", m.Topic)),
 		styleDim.Render(fmt.Sprintf("%d/%d", done, len(m.Exs))))
 
+	if m.ListOpen {
+		b.WriteString(styleHeader.Render("Pick an exercise") + "\n\n")
+		for i, ex := range m.Exs {
+			mark := "○"
+			if m.St.Completed[ex.ID] {
+				mark = "✅"
+			}
+			cursor := "  "
+			line := fmt.Sprintf("%s %s  %02d  %s", cursor, mark, i+1, ex.Title)
+			if i == m.ListCursor {
+				line = styleHeader.Render(fmt.Sprintf("▶ %s  %02d  %s", mark, i+1, ex.Title))
+			}
+			b.WriteString(line + "\n")
+		}
+		b.WriteString("\n" + styleDim.Render("↑/↓ move   enter start   q quit") + "\n")
+		return b.String()
+	}
+
 	if m.Phase == PhaseAllDone {
 		b.WriteString(stylePass.Render("All exercises complete! 🎉") + "\n\n")
 		b.WriteString(styleDim.Render("[q]uit") + "\n")
@@ -59,6 +77,6 @@ func (m Model) View() string {
 		fmt.Fprintf(&b, "%s\n", styleHint.Render("💡 "+ex.Hints[i]))
 	}
 
-	b.WriteString("\n" + styleDim.Render("[h]int  [r]eset  [s]kip  [q]uit   watching…") + "\n")
+	b.WriteString("\n" + styleDim.Render("[h]int  [l]ist  [r]eset  [s]kip  [q]uit   watching…") + "\n")
 	return b.String()
 }

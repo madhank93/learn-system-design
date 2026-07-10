@@ -18,6 +18,7 @@ func testModel(t *testing.T) Model {
 	}
 	st := &exercise.State{Completed: map[string]bool{}}
 	m := New("load-balancing", exs, st, t.TempDir()+"/.state.json")
+	m.ListOpen = false // focused tests drive the exercise flow directly
 	// stub out exec-side effects
 	m.check = func(ex exercise.Exercise) tea.Cmd { return func() tea.Msg { return CheckMsg{} } }
 	m.setup = func(ex exercise.Exercise) tea.Cmd { return func() tea.Msg { return SetupMsg{} } }
