@@ -26,7 +26,9 @@ func (s *Stack) compose(ctx context.Context, args ...string) *exec.Cmd {
 	base := []string{"compose", "-f", "docker-compose.yml", "-f", s.OverridePath}
 	cmd := exec.CommandContext(ctx, "docker", append(base, args...)...)
 	cmd.Dir = s.TopicDir
-	cmd.Env = append(os.Environ(), "SYSLINGS_WORK="+s.WorkDir)
+	// PWD must match cmd.Dir explicitly: compose files interpolate ${PWD} in
+	// bind mounts, and exec.Command inherits the parent's stale PWD env.
+	cmd.Env = append(os.Environ(), "SYSLINGS_WORK="+s.WorkDir, "PWD="+s.TopicDir)
 	return cmd
 }
 

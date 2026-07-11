@@ -36,10 +36,16 @@ var topics = map[string]struct {
 		probe: "http://localhost:8081",
 		desc:  "Nginx algorithms live: fair rotation, least-conn, sticky sessions, geo pools, black-hole timeouts",
 	},
+	"caching": {
+		dir:   "high-level-design/scalability/3.1_caching",
+		probe: "http://localhost:8081",
+		desc:  "proxy_cache for real: keys that never hit, TTL expiry pain, serve-stale-while-revalidate",
+	},
 }
 
-// topicOrder fixes the picker order (maps don't).
-var topicOrder = []string{"load-balancing"}
+// topicOrder fixes the list order (maps don't). Note: topics share host ports,
+// so only one stack runs at a time — playing another topic swaps stacks.
+var topicOrder = []string{"load-balancing", "caching"}
 
 type layout struct {
 	repoRoot     string

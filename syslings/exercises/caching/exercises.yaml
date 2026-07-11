@@ -1,0 +1,24 @@
+# Caching exercises. Stack: 3 Go item servers (80ms simulated DB latency,
+# responses carry a generated:<ms> timestamp) behind nginx proxies —
+# :8081 no cache, :8082 proxy_cache, :8083 stale-serving cache.
+- id: 01_never_hits
+  title: "The cache that never hits"
+  desc: "Hit ratio is 0% and the backend eats every request. Find what poisons the key."
+  type: fix
+  file: proxy_cache.conf
+  check: 01_never_hits/check.sh
+  hints:
+    - "Every response says X-Cache-Status: MISS — even asking for the same item twice. A cache entry is stored under its key; when can two identical requests produce two different keys?"
+    - "Look at proxy_cache_key in work/caching/proxy_cache.conf. `$request_id` is unique for EVERY request — nothing can ever match a stored entry."
+    - "Key by what identifies the content: proxy_cache_key \"$request_uri\";"
+
+- id: 02_serve_stale
+  title: "Death by cache refresh"
+  desc: "Every TTL expiry makes a user pay the full backend latency. Serve stale, refresh behind the scenes."
+  type: fix
+  file: stale.conf
+  check: 02_serve_stale/check.sh
+  hints:
+    - "When an entry expires, the next visitor's response says X-Cache-Status: EXPIRED — they waited for a synchronous backend refresh. Big sites hand out the slightly-old copy instead. What's that pattern called?"
+    - "nginx spells it: proxy_cache_use_stale (serve the stale copy when…) + proxy_cache_background_update (…while refreshing in the background)."
+    - "Add to the location block: `proxy_cache_use_stale error timeout updating;` and `proxy_cache_background_update on;` (plus `proxy_cache_lock on;` to stop refresh stampedes)."
