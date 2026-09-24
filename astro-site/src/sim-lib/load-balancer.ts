@@ -1,5 +1,5 @@
 /**
- * Pure load-balancing logic, split from the React view (LoadBalancerSim).
+ * Pure load-balancing logic, used by the LbSim traffic engine.
  * No DOM, no timers — just the routing decisions, so they can be unit tested
  * and reused by any renderer.
  */

@@ -10,7 +10,7 @@ import BreakIt from '../../../components/BreakIt.astro';
 import ReplicationFlow from '../../../components/ReplicationFlow';
 import SystemDiagram from '../../../components/SystemDiagram';
 
-<Badge text="Intermediate" variant="caution" /> <Badge text="Has code" variant="note" /> <Badge text="Docker required" variant="note" />
+<Badge text="Intermediate" variant="caution" /> <Badge text="Docker required" variant="note" />
 
 Think of replication like a teacher with several teaching assistants. The teacher keeps the master gradebook and records every new grade. Each assistant keeps their own copy, updated by watching the teacher's changes. Students can ask any assistant for grades — but only the teacher writes new ones.
 
@@ -36,34 +36,6 @@ The primary writes every change to an append-only log — the WAL (write-ahead l
 **See it run.** Writes bump the primary's version and stream to the replicas after the lag; reads flash green when fresh, amber when stale. Crank the lag (or write rate) up and stale reads climb — that's the read-your-writes hazard, live.
 
 <ReplicationFlow client:only="react" />
-
-**Step through a write, the stream, and a failover:**
-
-<SystemDiagram
-  client:only="react"
-  height={300}
-  nodes={[
-    { id: 'app', position: { x: 0, y: 110 }, data: { label: 'Application' } },
-    { id: 'primary', position: { x: 230, y: 110 }, data: { label: 'Primary' } },
-    { id: 'r1', position: { x: 470, y: 30 }, data: { label: 'Replica 1' } },
-    { id: 'r2', position: { x: 470, y: 190 }, data: { label: 'Replica 2' } },
-  ]}
-  edges={[
-    { id: 'w', source: 'app', target: 'primary', label: 'write' },
-    { id: 'wal1', source: 'primary', target: 'r1', label: 'WAL' },
-    { id: 'wal2', source: 'primary', target: 'r2', label: 'WAL' },
-    { id: 'rd1', source: 'app', target: 'r1', label: 'read' },
-    { id: 'rd2', source: 'app', target: 'r2', label: 'read' },
-    { id: 'promote', source: 'app', target: 'r1', label: 'writes now' },
-  ]}
-  steps={[
-    { caption: 'All writes go to the single primary.', activeNodes: ['app', 'primary'], activeEdges: ['w'] },
-    { caption: 'The primary streams its WAL to every replica (async).', activeNodes: ['primary', 'r1', 'r2'], activeEdges: ['wal1', 'wal2'] },
-    { caption: 'Reads are served by replicas — possibly a few ms stale.', activeNodes: ['app', 'r1', 'r2'], activeEdges: ['rd1', 'rd2'] },
-    { caption: 'Primary fails — heartbeat times out.', activeNodes: ['primary'], activeEdges: [] },
-    { caption: 'Replica 1 (highest WAL position) is promoted; writes resume there.', activeNodes: ['app', 'r1'], activeEdges: ['promote'] },
-  ]}
-/>
 
 Three topologies cover almost every production system:
 
@@ -99,6 +71,34 @@ This page focuses on single-leader — the default for PostgreSQL and MySQL.
 <BreakIt path="scalability/3.4_db_replication" recipe="db-replication" />
 
 ## Under the hood
+
+**Step through a write, the stream, and a failover:**
+
+<SystemDiagram
+  client:only="react"
+  height={300}
+  nodes={[
+    { id: 'app', position: { x: 0, y: 110 }, data: { label: 'Application' } },
+    { id: 'primary', position: { x: 230, y: 110 }, data: { label: 'Primary' } },
+    { id: 'r1', position: { x: 470, y: 30 }, data: { label: 'Replica 1' } },
+    { id: 'r2', position: { x: 470, y: 190 }, data: { label: 'Replica 2' } },
+  ]}
+  edges={[
+    { id: 'w', source: 'app', target: 'primary', label: 'write' },
+    { id: 'wal1', source: 'primary', target: 'r1', label: 'WAL' },
+    { id: 'wal2', source: 'primary', target: 'r2', label: 'WAL' },
+    { id: 'rd1', source: 'app', target: 'r1', label: 'read' },
+    { id: 'rd2', source: 'app', target: 'r2', label: 'read' },
+    { id: 'promote', source: 'app', target: 'r1', label: 'writes now' },
+  ]}
+  steps={[
+    { caption: 'All writes go to the single primary.', activeNodes: ['app', 'primary'], activeEdges: ['w'] },
+    { caption: 'The primary streams its WAL to every replica (async).', activeNodes: ['primary', 'r1', 'r2'], activeEdges: ['wal1', 'wal2'] },
+    { caption: 'Reads are served by replicas — possibly a few ms stale.', activeNodes: ['app', 'r1', 'r2'], activeEdges: ['rd1', 'rd2'] },
+    { caption: 'Primary fails — heartbeat times out.', activeNodes: ['primary'], activeEdges: [] },
+    { caption: 'Replica 1 (highest WAL position) is promoted; writes resume there.', activeNodes: ['app', 'r1'], activeEdges: ['promote'] },
+  ]}
+/>
 
 ### Sync vs async replication
 

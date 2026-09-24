@@ -8,9 +8,8 @@ import Figure from '../../../components/Figure.astro';
 import TopicNav from '../../../components/TopicNav.astro';
 import BreakIt from '../../../components/BreakIt.astro';
 import LoadBalancerFlow from '../../../components/LoadBalancerFlow';
-import LoadBalancerSim from '../../../components/LoadBalancerSim';
 
-<Badge text="Beginner" variant="success" /> <Badge text="Has code" variant="note" /> <Badge text="Docker required" variant="note" />
+<Badge text="Beginner" variant="success" /> <Badge text="Docker required" variant="note" />
 
 Think of a load balancer like the host at a busy restaurant. Guests don't pick their own table — the host seats each party where there's room, keeps any one waiter from being swamped, and quietly stops seating people in a section where the waiter just went home sick. Diners never know how the seating works; they just get served.
 
@@ -58,6 +57,12 @@ The balancer accepts each incoming connection, picks a backend by algorithm, and
 
 <LoadBalancerFlow client:only="react" />
 
+## Break it
+
+<BreakIt path="networking-and-edge/2.1_load_balancer" recipe="load-balancing" syslings="load-balancing" />
+
+## Under the hood
+
 ### Operating levels
 
 <Figure caption="Layer 4 routes on IP and port alone (fast); Layer 7 reads the HTTP request to make smarter, content-aware decisions.">
@@ -78,19 +83,9 @@ flowchart TB
 | **L4 Transport** | IP + TCP port | Fast | Round Robin, Least Connections |
 | **L7 Application** | HTTP headers, cookies, URL | Slower but smarter | Geo-routing, Consistent Hashing |
 
-## Break it
-
-<BreakIt path="networking-and-edge/2.1_load_balancer" recipe="load-balancing" syslings="load-balancing" />
-
 ## The four algorithms
 
-**Play with it.** Pick an algorithm, fire traffic, and take a server down to watch health checks reroute. Switch to *Sticky* to see each client pinned to one server.
-
-<LoadBalancerSim client:only="react" />
-
-:::note
-This one simulator replaces four static diagrams from the old site — the balancer overview, the "server down" state, the four-algorithm comparison, and the sticky-session failover. They are all just *states* of this one interactive. (The health-check lifecycle gets its own state diagram below.)
-:::
+Each one is a tab in the simulator at the top of the page; switch between them as you read.
 
 ### Round Robin
 
@@ -139,7 +134,7 @@ Limitation: Round Robin ignores server load. A slow request on Server 1 doesn't 
 
 ### Least Connections
 
-Route each new request to the server with the fewest active connections at that moment. (In the simulator above, switch to *Least Connections* and watch new traffic favor the idle servers.)
+Route each new request to the server with the fewest active connections at that moment. (In the simulator above, switch to *Least conn* and watch new traffic favor the idle servers.)
 
 ```nginx
 upstream backend {

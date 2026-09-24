@@ -8,9 +8,8 @@ import Figure from '../../../components/Figure.astro';
 import TopicNav from '../../../components/TopicNav.astro';
 import BreakIt from '../../../components/BreakIt.astro';
 import RateLimiterFlow from '../../../components/RateLimiterFlow';
-import TokenBucket from '../../../components/TokenBucket';
 
-<Badge text="Intermediate" variant="caution" /> <Badge text="Has code" variant="note" /> <Badge text="Docker required" variant="note" />
+<Badge text="Intermediate" variant="caution" /> <Badge text="Docker required" variant="note" />
 
 Think of rate limiting like a nightclub bouncer with a clicker. The club holds 200 people safely; the bouncer counts everyone in and out and stops the line when it's full. Regulars don't get to rush the door all at once, and one rowdy group can't pack the club so tight that nobody else gets in.
 
@@ -48,10 +47,6 @@ Every request hits a counter keyed by client (IP, API key, user ID). The algorit
 **See it run.** Requests stream toward the gate; each spends a token or is rejected with a red `429`. Raise the rate above the refill and watch the bucket drain into denials — then drop it back and the bucket recovers its burst allowance.
 
 <RateLimiterFlow client:only="react" />
-
-**Play with the token bucket** — the same algorithm, broken down step by step. Let it idle to bank tokens, then burst:
-
-<TokenBucket client:only="react" />
 
 ## Break it
 

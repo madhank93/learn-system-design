@@ -10,7 +10,7 @@ This is the gold-standard recipe for a topic page. **Load Balancing (`src/conten
 4. **"You'll learn"** — 3 bullets.
 5. `## What is …?` — one tight definition paragraph.
 6. `## Why it matters` — bullets, with numbers where possible.
-7. `## How it works` — prose, then **the interactive hero sim** (`See it run.` lead-in), then at most one supporting diagram. Keep it short: the learner should reach step 8 within ~3 screens.
+7. `## How it works` — prose, then **one** interactive hero sim (`See it run.` lead-in) — never a second widget for the same concept — then at most one supporting diagram. Keep it short: the learner should reach step 8 within ~3 screens.
 8. `## Break it` — `<BreakIt path="<category>/<dir>" recipe="<topic>" syslings="<topic>" />`. Lists the syslings exercises straight from `syslings/exercises/<topic>/exercises.yaml` and shows the runnable stack. Omit `syslings` when the topic has no exercises yet; the block then offers the stack only.
 9. `## Under the hood` — the `### …` mechanism subsections, with `<Figure>`-wrapped mermaid diagrams + trade-off tables.
 10. `## Key concepts` — glossary table.
@@ -36,10 +36,10 @@ import Figure from '../../../components/Figure.astro';
 import TopicNav from '../../../components/TopicNav.astro';
 // + any interactive components this topic uses
 
-<Badge text="Intermediate" variant="caution" /> <Badge text="Has code" variant="note" /> <Badge text="Docker required" variant="note" />
+<Badge text="Intermediate" variant="caution" /> <Badge text="Docker required" variant="note" />
 ```
 
-Difficulty → variant: **Beginner** = `success`, **Intermediate** = `caution`, **Advanced** = `danger`. Pull the difficulty from the source topic's `[extra] difficulty` frontmatter in `website/content/hld/**`.
+Difficulty → variant: **Beginner** = `success`, **Intermediate** = `caution`, **Advanced** = `danger`. Add **Docker required** when the runnable demo uses Docker Compose.
 
 ## Component catalog
 
