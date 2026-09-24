@@ -231,7 +231,7 @@ Used by DynamoDB, Cassandra, Riak.
 
 ## This implementation
 
-The Go service runs a primary with streaming replicas behind Docker, so you can write to the primary and watch reads served from a lagging replica — the read-your-writes hazard, for real.
+The Go service runs a primary and two replicas behind Docker. Each replica polls the primary's change log (`/log?since=<version>`) every 500 ms — a simplified stand-in for WAL streaming — so you can write to the primary and watch reads served from a lagging replica: the read-your-writes hazard, for real.
 
 <RunCode path="scalability/3.4_db_replication" recipe="db-replication" />
 

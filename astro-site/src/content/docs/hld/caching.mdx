@@ -1,6 +1,6 @@
 ---
 title: Caching
-description: Cache placement strategies, eviction policies, cache-aside vs write-through — with Go and Redis examples.
+description: Cache placement strategies, eviction policies, cache-aside vs write-through — with a runnable Nginx proxy_cache demo in front of a slow Go backend.
 ---
 
 import { Badge } from '@astrojs/starlight/components';
@@ -25,7 +25,7 @@ Caching stores the result of an expensive computation or I/O operation in fast s
 
 ## Why it matters
 
-- A RAM read costs ~1 ms; a database query costs ~10 ms or more — caching closes a 10× latency gap per request.
+- An in-memory cache answers in well under a millisecond (a Redis round trip is ~0.1–1 ms; an in-process lookup is microseconds); a database query often costs 10 ms or more — an order-of-magnitude gap per request.
 - A cache at 95% hit ratio reduces database load by 20×; at 50% it still halves it.
 - Repeat reads of hot data (profiles, prices, sessions) dominate most web workloads — exactly what a cache absorbs.
 - Database capacity is expensive to scale; cache capacity is cheap RAM.
@@ -184,29 +184,38 @@ hit_ratio = keyspace_hits / (keyspace_hits + keyspace_misses)
 
 <RunCode path="scalability/3.1_caching" recipe="caching" />
 
-The Go service implements cache-aside against Redis. The core read path is four steps — check cache, fall through to DB on miss, serialise, populate:
+The concepts above use an application cache (Redis) as the example; the runnable demo caches one layer up, in the **reverse proxy**. Three Go backends each sleep 80 ms per request to stand in for a slow database, and three Nginx instances sit in front of them — one per strategy:
 
-```go
-// 1. Check cache
-val, err := rdb.Get(ctx, cacheKey).Result()
-if err == nil {
-	w.Header().Set("X-Cache", "HIT")
-	w.Write([]byte(val))
-	return
-}
-// 2. Cache MISS — fetch from DB
-user, err := mockDB(ctx, id)
-// 3. Serialise, 4. populate cache (best-effort)
-data, _ := json.Marshal(user)
-if setErr := rdb.Set(ctx, cacheKey, data, cacheTTL).Err(); setErr != nil {
-	log.Printf("redis SET error: %v", setErr)
-}
-w.Header().Set("X-Cache", "MISS")
-w.Write(data)
+| Port | Nginx config | Behaviour |
+|------|--------------|-----------|
+| 8081 | `no_cache.conf` | Every request reaches a backend (~80 ms) |
+| 8082 | `proxy_cache.conf` | First request `MISS`, then `HIT` from cache for 30 s |
+| 8083 | `stale.conf` | 10 s TTL; after expiry serves `STALE` instantly and refreshes in the background |
+
+The stale-while-revalidate config is where the interesting directives live:
+
+```nginx
+proxy_cache                   stale_cache;
+proxy_cache_key               "$request_uri";
+proxy_cache_valid             200 10s;
+proxy_ignore_headers          Cache-Control Expires;
+proxy_cache_use_stale         error timeout updating;
+proxy_cache_background_update on;
+proxy_cache_lock              on;
+add_header                    X-Cache-Status $upstream_cache_status;
 ```
 
-- Redis errors on `GET` fall through to the DB rather than returning 500 — the cache is an optimisation, not a hard dependency.
-- `X-Cache: HIT/MISS` headers make behaviour observable during testing.
+- `proxy_ignore_headers` matters: the backend sends `Cache-Control: max-age=30`, which Nginx would otherwise obey over the 10 s `proxy_cache_valid`, so the entry would never go stale when you expect.
+- `proxy_cache_lock on` is the stampede fix — one request refills a missing key while the rest wait for it.
+- `X-Cache-Status` exposes `MISS` / `HIT` / `STALE` / `UPDATING`, so `test.sh` can show each state with its latency:
+
+```text
+  req 1 → 0.087s [MISS]      # fell through to the 80 ms backend
+  req 2 → 0.002s [HIT]
+  ...wait 11 s for the TTL to expire...
+  req 1 → 0.002s [STALE]     # old copy served instantly
+  req 2 → 0.002s [UPDATING]  # background refresh in flight
+```
 
 ## Further reading
 

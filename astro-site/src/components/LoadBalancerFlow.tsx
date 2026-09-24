@@ -230,7 +230,7 @@ export default function LoadBalancerFlow() {
 
       <canvas ref={canvasRef} className="lsd-canvas" style={{ height: HEIGHT }} />
       <LiveSummary
-        text={`Throughput ${m.throughput} per second, drop rate ${Math.round(m.dropRate * 100)} percent, p99 latency ${Math.round(m.p99)} milliseconds, ${servers.length} servers.`}
+        text={`Throughput ${m.throughput} per second, drop rate ${Math.round(m.dropRate * 100)} percent, simulated p99 latency ${Math.round(m.p99)} milliseconds, ${servers.length} servers.`}
       />
       <SimLegend
         items={[
@@ -262,16 +262,16 @@ export default function LoadBalancerFlow() {
       <div className="lsd-metric-row">
         <Metric label="throughput" value={`${m.throughput}/s`} />
         <Metric label="drop rate" value={`${Math.round(m.dropRate * 100)}%`} warn={m.dropRate > 0.1} />
-        <Metric label="p50" value={`${Math.round(m.p50)}ms`} />
-        <Metric label="p95" value={`${Math.round(m.p95)}ms`} />
-        <Metric label="p99" value={`${Math.round(m.p99)}ms`} warn={m.p99 > 2000} />
+        <Metric label="p50 (sim)" value={`${Math.round(m.p50)}ms`} />
+        <Metric label="p95 (sim)" value={`${Math.round(m.p95)}ms`} />
+        <Metric label="p99 (sim)" value={`${Math.round(m.p99)}ms`} warn={m.p99 > 2000} />
       </div>
 
       <div className="lsd-hist" aria-hidden>
         {hist.bars.map((v, i) => (
           <span key={i} className="lsd-hist-bar" style={{ height: `${Math.round(v * 100)}%` }} />
         ))}
-        <span className="lsd-hist-axis">latency distribution → {hist.max}ms</span>
+        <span className="lsd-hist-axis">latency distribution (sim time) → {hist.max}ms</span>
       </div>
     </div>
   );

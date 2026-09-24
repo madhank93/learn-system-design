@@ -1,6 +1,6 @@
 ---
 title: Rate Limiting
-description: Token bucket, sliding window, and distributed rate limiting — with Go and Redis examples.
+description: Token bucket, sliding window, and distributed rate limiting — with a runnable Nginx limit_req demo and a Redis sketch for going fleet-wide.
 ---
 
 import { Badge } from '@astrojs/starlight/components';
@@ -201,36 +201,33 @@ X-RateLimit-Reset: 1717588265
 
 <RunCode path="scalability/3.2_rate_limiting" recipe="rate-limiting" />
 
-The Go middleware in this module is a self-contained in-memory token bucket — the core refill-and-consume logic:
+The runnable demo enforces limits at the edge with Nginx `limit_req`, in front of a Go backend that just echoes the request. Three Nginx instances show three policies:
 
-```go
-func (rl *RateLimiter) Allow(key string) bool {
-	b := rl.bucket(key)
-	b.mu.Lock()
-	defer b.mu.Unlock()
+| Port | Nginx config | Limit | Keyed by |
+|------|--------------|-------|----------|
+| 8081 | `per_ip.conf` | 5 req/s, no burst | client IP (`$binary_remote_addr`) |
+| 8082 | `per_key.conf` | 10 req/s, no burst | `X-Api-Key` header |
+| 8083 | `burst.conf` | 2 req/s, burst of 10 | client IP |
 
-	now := time.Now()
-	elapsed := now.Sub(b.lastRefill).Seconds()
-	b.lastRefill = now
+```nginx
+limit_req_zone $binary_remote_addr zone=burst_zone:10m rate=2r/s;
 
-	b.tokens += elapsed * rl.rate            // refill
-	if b.tokens > rl.capacity {
-		b.tokens = rl.capacity
-	}
-	if b.tokens >= 1 {
-		b.tokens--                            // consume
-		return true
-	}
-	return false
+location / {
+    limit_req        zone=burst_zone burst=10 nodelay;
+    limit_req_status 429;
+    proxy_pass       http://backend;
 }
 ```
 
-- Two-level locking (`RateLimiter.mu` for the map, `TokenBucket.mu` per bucket) avoids a global bottleneck.
-- Refill is lazy (computed per call), not a background goroutine — simpler, no goroutine leaks.
-- In production, replace the `buckets` map with an LRU cache to bound memory.
+`limit_req` is a leaky bucket, which behaves like the token bucket above with capacity `burst + 1`:
+
+- **Without `burst`**, the rate is enforced per slot: `5r/s` means one request every 200 ms. Eight back-to-back requests give **1 × 200, then 429s** — not five.
+- **With `burst=10 nodelay`**, ten extra requests are admitted immediately, so twelve back-to-back requests give **11 × 200, then 429**. The burst refills at 2 r/s.
+- Per-key zones are independent: when `key-A` is throttled, `key-B` still gets through.
+- Each Nginx instance keeps its own counters in shared memory. Run two instances behind a load balancer and a client gets twice the limit — the problem the Redis approach below solves.
 
 <details>
-<summary>Redis Lua script: atomic distributed token bucket</summary>
+<summary>Going fleet-wide: atomic token bucket in Redis (sketch, not part of the demo)</summary>
 
 ```lua
 -- KEYS[1] = bucket key   ARGV: capacity, rate, now, cost
