@@ -1,0 +1,42 @@
+services:
+  redis:
+    image: redis:7-alpine
+    networks:
+      - electionnet
+
+  node-1:
+    build: ./node
+    environment:
+      - NODE_ID=node-1
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "8081:8080"
+    depends_on: [redis]
+    networks:
+      - electionnet
+
+  node-2:
+    build: ./node
+    environment:
+      - NODE_ID=node-2
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "8082:8080"
+    depends_on: [redis]
+    networks:
+      - electionnet
+
+  node-3:
+    build: ./node
+    environment:
+      - NODE_ID=node-3
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "8083:8080"
+    depends_on: [redis]
+    networks:
+      - electionnet
+
+networks:
+  electionnet:
+    driver: bridge

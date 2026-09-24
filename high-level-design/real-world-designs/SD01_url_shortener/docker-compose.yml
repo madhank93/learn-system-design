@@ -1,0 +1,21 @@
+services:
+  redis:
+    image: redis:7-alpine
+    networks:
+      - urlnet
+
+  api:
+    build: ./api
+    environment:
+      - REDIS_ADDR=redis:6379
+      - BASE_URL=http://localhost:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    networks:
+      - urlnet
+
+networks:
+  urlnet:
+    driver: bridge

@@ -1,0 +1,41 @@
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4318:4318"     # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - tracenet
+
+  inventory-service:
+    build: ./inventory-service
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4318
+    networks:
+      - tracenet
+
+  order-service:
+    build: ./order-service
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4318
+      - INVENTORY_SERVICE_URL=http://inventory-service:8080
+    depends_on: [inventory-service]
+    networks:
+      - tracenet
+
+  frontend:
+    build: ./frontend
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4318
+      - ORDER_SERVICE_URL=http://order-service:8080
+    ports:
+      - "8080:8080"
+    depends_on: [order-service]
+    networks:
+      - tracenet
+
+networks:
+  tracenet:
+    driver: bridge
