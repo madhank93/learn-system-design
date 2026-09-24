@@ -26,6 +26,9 @@ export function usePrefersReducedMotion(): boolean {
  * `step`/`draw` are read from refs each frame, so passing fresh closures (that
  * capture current config/state) every render is fine — no loop restart.
  *
+ * The loop only runs while the canvas is on screen; scrolled away, the sim
+ * freezes rather than burning frames nobody sees.
+ *
  * Accessibility: the canvas is exposed as `role="img"` with `ariaLabel`; pair it
  * with a visually-hidden `aria-live` summary in the component for live metrics,
  * and default `playing` to false when `usePrefersReducedMotion()` is true.
@@ -69,7 +72,12 @@ export function useCanvasSim(opts: {
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
+    let visible = true;
     const frame = (now: number) => {
+      if (!visible) {
+        raf = 0;
+        return;
+      }
       const o = ref.current;
       let dt = now - last;
       last = now;
@@ -81,9 +89,19 @@ export function useCanvasSim(opts: {
     };
     raf = requestAnimationFrame(frame);
 
+    const io = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible && raf === 0) {
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      }
+    });
+    io.observe(canvas);
+
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      io.disconnect();
     };
   }, []);
 

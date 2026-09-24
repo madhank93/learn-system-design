@@ -79,7 +79,7 @@
 .lsd-bar-track { height: 12px; background: var(--sl-color-gray-6); border-radius: 4px; flex: 1; overflow: hidden; min-width: 60px; }
 .lsd-bar-fill { height: 100%; border-radius: 4px; transition: width .25s ease; }
 .lsd-hint {
-  font-size: 0.8rem; color: var(--sl-color-gray-3);
+  font-size: 0.8rem; color: var(--sl-color-gray-2);
   background: var(--sl-color-gray-6); border-radius: 0.4rem;
   padding: 0.4rem 0.6rem; margin-bottom: 0.5rem;
 }
@@ -91,7 +91,7 @@
 .lsd-seg button:last-child { border-top-right-radius: 0.4rem; border-bottom-right-radius: 0.4rem; }
 .lsd-seg button[aria-pressed='true'] {
   background: var(--sl-color-accent);
-  color: var(--sl-color-white);
+  color: #fff; /* --sl-color-white turns dark in light theme */
   border-color: var(--sl-color-accent);
   position: relative;
   z-index: 1;
@@ -155,7 +155,7 @@
   font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--sl-color-gray-3);
+  color: var(--sl-color-gray-2);
 }
 .lsd-metric-value {
   display: block;
@@ -164,6 +164,8 @@
   color: var(--sl-color-white);
   font-variant-numeric: tabular-nums;
 }
+.lsd-metric-value.is-warn { color: #ff7b72; }
+:root[data-theme='light'] .lsd-metric-value.is-warn { color: #c0392b; }
 
 .lsd-hist {
   position: relative;

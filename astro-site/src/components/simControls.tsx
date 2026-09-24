@@ -34,7 +34,7 @@ export function Metric({ label, value, warn }: { label: string; value: string; w
   return (
     <div className="lsd-metric">
       <span className="lsd-metric-label">{label}</span>
-      <span className="lsd-metric-value" style={warn ? { color: '#E74C3C' } : undefined}>
+      <span className={warn ? 'lsd-metric-value is-warn' : 'lsd-metric-value'}>
         {value}
       </span>
     </div>
