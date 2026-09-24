@@ -235,6 +235,25 @@
 }
 .lsd-runcode-cmd code { background: none; color: var(--sl-color-gray-1); }
 
+/* "Break it" step: syslings exercise list + runnable stack */
+.lsd-breakit { margin: 1rem 0 1.5rem; }
+.lsd-breakit > p { margin: 0.75rem 0; }
+.lsd-breakit-list { margin: 1rem 0; padding-left: 1.4rem; }
+.lsd-breakit-list li { margin: 0.55rem 0; }
+.lsd-breakit-title { font-weight: 600; color: var(--sl-color-white); }
+.lsd-breakit-type {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--sl-color-gray-4);
+  border-radius: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--sl-color-gray-2);
+  vertical-align: 0.1em;
+}
+.lsd-breakit-type.is-fix { border-color: var(--sl-color-accent); color: var(--sl-color-accent-high); }
+.lsd-breakit-desc { display: block; color: var(--sl-color-gray-2); font-size: 0.92rem; }
+.lsd-breakit-foot { font-size: 0.9rem; color: var(--sl-color-gray-2); }
+
 /* prev/next learning-path footer */
 .lsd-topicnav {
   display: flex;

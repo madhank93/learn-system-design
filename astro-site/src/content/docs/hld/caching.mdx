@@ -6,7 +6,7 @@ description: Cache placement strategies, eviction policies, cache-aside vs write
 import { Badge } from '@astrojs/starlight/components';
 import Figure from '../../../components/Figure.astro';
 import TopicNav from '../../../components/TopicNav.astro';
-import RunCode from '../../../components/RunCode.astro';
+import BreakIt from '../../../components/BreakIt.astro';
 import CacheFlow from '../../../components/CacheFlow';
 import SystemDiagram from '../../../components/SystemDiagram';
 
@@ -57,6 +57,12 @@ flowchart LR
 | Reverse proxy / Edge | Nginx proxy_cache, Varnish | ~5–50 ms (avoids app tier) |
 | Application layer | Redis, Memcached | ~1–10 ms (RAM vs disk) |
 | Database query cache | pg_prewarm | ~5–50 ms (avoids parse + plan + I/O) |
+
+## Break it
+
+<BreakIt path="scalability/3.1_caching" recipe="caching" syslings="caching" />
+
+## Under the hood
 
 ### Cache-aside (lazy loading)
 
@@ -181,8 +187,6 @@ hit_ratio = keyspace_hits / (keyspace_hits + keyspace_misses)
 | Expired keys | `expired_keys` | Sudden spike = mass TTL expiry |
 
 ## This implementation
-
-<RunCode path="scalability/3.1_caching" recipe="caching" />
 
 The concepts above use an application cache (Redis) as the example; the runnable demo caches one layer up, in the **reverse proxy**. Three Go backends each sleep 80 ms per request to stand in for a slow database, and three Nginx instances sit in front of them — one per strategy:
 

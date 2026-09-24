@@ -6,7 +6,7 @@ description: Circuit breaker pattern — CLOSED/OPEN/HALF_OPEN states, failure t
 import { Badge } from '@astrojs/starlight/components';
 import Figure from '../../../components/Figure.astro';
 import TopicNav from '../../../components/TopicNav.astro';
-import RunCode from '../../../components/RunCode.astro';
+import BreakIt from '../../../components/BreakIt.astro';
 import CircuitBreakerFlow from '../../../components/CircuitBreakerFlow';
 import CircuitBreaker from '../../../components/CircuitBreaker';
 
@@ -64,6 +64,12 @@ flowchart TD
     class Reject reject
 ```
 </Figure>
+
+## Break it
+
+<BreakIt path="resilience/5.1_circuit_breaker" recipe="circuit-breaker" />
+
+## Under the hood
 
 ### Sliding window implementations
 
@@ -188,8 +194,6 @@ Monitor state-transition events as a first-class operational metric. A breaker t
 ## This implementation
 
 The Go service wraps a downstream call in a breaker with a count-based window, a trip threshold, and a cooldown timer — the same state machine the simulations above model.
-
-<RunCode path="resilience/5.1_circuit_breaker" recipe="circuit-breaker" />
 
 ## Further reading
 

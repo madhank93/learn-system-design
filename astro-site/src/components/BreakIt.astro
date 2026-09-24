@@ -1,0 +1,48 @@
+---
+/**
+ * "Break it" step of a topic page: the topic's syslings exercises (read from
+ * syslings/exercises/<syslings>/exercises.yaml) plus the runnable stack.
+ * Omit `syslings` for topics without exercises; only the stack is offered.
+ */
+import { getCollection, type CollectionKey } from 'astro:content';
+import RunCode from './RunCode.astro';
+
+interface Props {
+  path: string;
+  recipe: string;
+  syslings?: string;
+}
+const { path, recipe, syslings } = Astro.props;
+
+const exercises = syslings
+  ? (await getCollection(`syslings-${syslings}` as CollectionKey)).sort((a, b) => a.id.localeCompare(b.id))
+  : [];
+---
+
+<div class="lsd-breakit not-content">
+  {exercises.length > 0 ? (
+    <>
+      <p>
+        {exercises.length} exercises. Each one mounts a deliberately broken config into the real
+        Nginx + Go stack in Docker. Fix the file, save, and the check re-runs against live traffic.
+      </p>
+      <pre class="lsd-runcode-cmd"><code>git clone https://github.com/madhank93/learn-system-design
+cd learn-system-design
+just syslings {syslings}     # needs Go and Docker · without just: go run ./syslings {syslings}</code></pre>
+      <ol class="lsd-breakit-list">
+        {exercises.map((ex) => (
+          <li>
+            <span class="lsd-breakit-title">{ex.data.title}</span>
+            <span class={`lsd-breakit-type is-${ex.data.type}`}>{ex.data.type === 'fix' ? 'fix it' : 'watch it'}</span>
+            <span class="lsd-breakit-desc">{ex.data.desc}</span>
+          </li>
+        ))}
+      </ol>
+      <p class="lsd-breakit-foot">Stuck? <kbd>h</kbd> gives a hint, one level at a time. Progress is saved, so you can quit and pick up later.</p>
+      <p>Or skip the exercises and run the stack yourself:</p>
+    </>
+  ) : (
+    <p>No guided exercises for this topic yet. Run the real stack and break it by hand: stop a container, change a config, re-run the test.</p>
+  )}
+  <RunCode path={path} recipe={recipe} />
+</div>

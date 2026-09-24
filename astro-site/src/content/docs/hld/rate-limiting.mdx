@@ -6,7 +6,7 @@ description: Token bucket, sliding window, and distributed rate limiting — wit
 import { Badge } from '@astrojs/starlight/components';
 import Figure from '../../../components/Figure.astro';
 import TopicNav from '../../../components/TopicNav.astro';
-import RunCode from '../../../components/RunCode.astro';
+import BreakIt from '../../../components/BreakIt.astro';
 import RateLimiterFlow from '../../../components/RateLimiterFlow';
 import TokenBucket from '../../../components/TokenBucket';
 
@@ -52,6 +52,12 @@ Every request hits a counter keyed by client (IP, API key, user ID). The algorit
 **Play with the token bucket** — the same algorithm, broken down step by step. Let it idle to bank tokens, then burst:
 
 <TokenBucket client:only="react" />
+
+## Break it
+
+<BreakIt path="scalability/3.2_rate_limiting" recipe="rate-limiting" />
+
+## Under the hood
 
 ### Where to enforce limits
 
@@ -198,8 +204,6 @@ X-RateLimit-Reset: 1717588265
 ```
 
 ## This implementation
-
-<RunCode path="scalability/3.2_rate_limiting" recipe="rate-limiting" />
 
 The runnable demo enforces limits at the edge with Nginx `limit_req`, in front of a Go backend that just echoes the request. Three Nginx instances show three policies:
 

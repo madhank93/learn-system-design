@@ -6,7 +6,7 @@ description: Round Robin, Least Connections, Geo-based routing, and Consistent H
 import { Badge } from '@astrojs/starlight/components';
 import Figure from '../../../components/Figure.astro';
 import TopicNav from '../../../components/TopicNav.astro';
-import RunCode from '../../../components/RunCode.astro';
+import BreakIt from '../../../components/BreakIt.astro';
 import LoadBalancerFlow from '../../../components/LoadBalancerFlow';
 import LoadBalancerSim from '../../../components/LoadBalancerSim';
 
@@ -77,6 +77,10 @@ flowchart TB
 |-------|------|-------|---------|
 | **L4 Transport** | IP + TCP port | Fast | Round Robin, Least Connections |
 | **L7 Application** | HTTP headers, cookies, URL | Slower but smarter | Geo-routing, Consistent Hashing |
+
+## Break it
+
+<BreakIt path="networking-and-edge/2.1_load_balancer" recipe="load-balancing" syslings="load-balancing" />
 
 ## The four algorithms
 
@@ -309,8 +313,6 @@ mode slow start exists to prevent.
 
 ## This implementation
 
-<RunCode path="networking-and-edge/2.1_load_balancer" recipe="load-balancing" />
-
 A Go HTTP server that identifies itself on every response, Dockerized, behind 4 Nginx instances — one per algorithm — on one Docker network. Each server prints its ID and region, making the distribution algorithm visible per request:
 
 ```go
@@ -332,50 +334,6 @@ http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 | `nginx-least-conn` | Least-connections pool on :8082 |
 | `nginx-geo-env` | Header-mapped regional pools on :8083 |
 | `nginx-consistent-hash` | Cookie-hashed sticky pool on :8084 |
-
-## Lab: fix the broken load balancer
-
-Reading about algorithms is one thing — debugging them is how they stick.
-**syslings** is this repo's rustlings-style trainer: it boots the real
-Nginx + Go stack in Docker with deliberately broken configs mounted, then
-watches your edits. Save a file and the checkpoint reruns against live
-traffic; go green and it advances to the next exercise.
-
-```bash
-just syslings              # from the repo root — opens the exercise picker
-# no just? plain Go works: go run ./syslings
-```
-
-```text
-🧪 syslings   stack: ● up · load-balancing
-
-╭──────────────────────────────────╮ ╭───────────────────────────────────────╮
-│ load-balancing 2/7               │ │ least_conn.conf is lying              │
-│  ✓ 01 All aboard        ◇scenario│ │                                       │
-│  ✓ 02 Round robin plays f… ✎fix  │ │ ✗ two servers are busy, yet the quick │
-│ ▸◐ 03 least_conn.conf is … ✎fix  │ │   requests spread evenly (3/9, want   │
-│  ◌ 04 Sticky sessions tha… ✎fix  │ │   ≥6 on the idle server)              │
-│  ◌ 05 Lost in geo-transla… ✎fix  │ │                                       │
-│  ◌ 06 The black-hole time… ✎fix  │ │ 💡 With no directive, an nginx        │
-│  ◌ 07 Bring server2 home ◇scenario│ │   upstream defaults to round robin.   │
-╰──────────────────────────────────╯ ╰───────────────────────────────────────╯
-↵ play · h hint · e edit · r reset · s solution · n next · u up · d down · ? help · q quit
-watching load-balancing/03_least_conn — save to re-check
-```
-
-What you'll debug, in order:
-
-1. **All aboard** — meet the four balancers (:8081–:8084)
-2. **Round robin plays favorites** — one server is hogging every request
-3. **least_conn.conf is lying** — the "least connections" balancer isn't counting
-4. **Sticky sessions that aren't** — pinned to the wrong key entirely
-5. **Lost in geo-translation** — header-less traffic dumped into one region's pool
-6. **The black-hole timeout** — a decommissioned VM still in the pool (this repo hit this exact bug for real)
-7. **Bring server2 home** — recovery, and why eviction has a memory
-
-Each exercise has a simulator twin above — break it in the sim first, then fix
-it for real. Progress persists in `syslings/work/`; quit anytime, resume later.
-Hints are progressive (`h`), and `syslings reset <id>` restores a mangled file.
 
 ## Further reading
 

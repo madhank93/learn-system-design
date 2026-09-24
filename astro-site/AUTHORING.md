@@ -10,17 +10,18 @@ This is the gold-standard recipe for a topic page. **Load Balancing (`src/conten
 4. **"You'll learn"** — 3 bullets.
 5. `## What is …?` — one tight definition paragraph.
 6. `## Why it matters` — bullets, with numbers where possible.
-7. `## How it works` — prose, then **the interactive hero sim** (`See it run.` lead-in), then build-time diagrams.
-8. `### …` subsections — mechanisms, with `<Figure>`-wrapped mermaid diagrams + trade-off tables.
-9. `## Key concepts` — glossary table.
-10. `## When to use it` — two-column "use it when / avoid when" table.
-11. `## Trade-offs and failure modes` — concern / issue / mitigation table.
-12. `## This implementation` — **`<RunCode path="…" />`** linking the runnable Go/Docker code (makes the "Has code" badge clickable), then the core snippet.
-13. `## Further reading` — 3–5 authoritative links.
-14. `<details>` **Interview questions** — 5 Q&As with production baselines.
-15. `<TopicNav>` — prev/next learning-path footer.
+7. `## How it works` — prose, then **the interactive hero sim** (`See it run.` lead-in), then at most one supporting diagram. Keep it short: the learner should reach step 8 within ~3 screens.
+8. `## Break it` — `<BreakIt path="<category>/<dir>" recipe="<topic>" syslings="<topic>" />`. Lists the syslings exercises straight from `syslings/exercises/<topic>/exercises.yaml` and shows the runnable stack. Omit `syslings` when the topic has no exercises yet; the block then offers the stack only.
+9. `## Under the hood` — the `### …` mechanism subsections, with `<Figure>`-wrapped mermaid diagrams + trade-off tables.
+10. `## Key concepts` — glossary table.
+11. `## When to use it` — two-column "use it when / avoid when" table.
+12. `## Trade-offs and failure modes` — concern / issue / mitigation table.
+13. `## This implementation` — how the runnable demo is built, with snippets **copied from the repo** (never illustrative code presented as the demo). Code that isn't in the repo goes in a `<details>` labelled as a sketch.
+14. `## Further reading` — 3–5 authoritative links.
+15. `<details>` **Interview questions** — 5 Q&As with production baselines.
+16. `<TopicNav>` — prev/next learning-path footer.
 
-This internal arc *is* the beginner→advanced ramp (analogy → mechanics → trade-offs → failure modes → interview depth). Keep it.
+The arc is see → play → break → go deeper: analogy and sim first, hands-on break/fix early, then mechanics → trade-offs → interview depth for those who want it.
 
 ## Frontmatter + badges
 
@@ -50,6 +51,7 @@ Difficulty → variant: **Beginner** = `success`, **Intermediate** = `caution`, 
 | Callouts | `:::note` / `:::caution` / `:::tip` | Starlight built-in |
 | Prev/next path | `<TopicNav prev={…} next={…} />` | `components/TopicNav.astro` |
 | Link to runnable code | `<RunCode path="<category>/<dir>" recipe="<topic>" />` | `components/RunCode.astro` — links the GitHub source + shows `cd high-level-design` then `just <recipe>-up / -test / -down` |
+| Break-it step (exercises + runnable code) | `<BreakIt path="…" recipe="…" syslings="<topic>" />` | `components/BreakIt.astro` — renders the syslings exercise list from YAML, then `<RunCode>`; use this on topic pages rather than bare `<RunCode>` |
 
 **Rules**
 - Static, non-interactive diagram → **mermaid fence in `<Figure>`** (never a runtime component). Build-time rendering keeps the page zero-JS.
@@ -95,10 +97,10 @@ Slug = Starlight content slug (`hld/<file>`). Also add the page to the sidebar i
 - [ ] Convert every ` ```mermaid ` block: keep as a fence, wrap in `<Figure caption="…">`. **Remove inline `;`** from sequence-diagram messages (mermaid treats `;` as a separator — it hard-errors at build).
 - [ ] Add the hero interactive (reuse an existing `*Flow`, or build one per "Adding a sim").
 - [ ] Keep the standard section order; ensure a `## Trade-offs and failure modes` table and an interview `<details>` exist.
-- [ ] Add `<RunCode path="…" recipe="…" />` in `## This implementation`. `path` = current `high-level-design/<category>/<dir>` (verify it exists — dirs were renumbered); `recipe` = the justfile recipe base in `high-level-design/justfile` (the `<recipe>-up/-test/-down` set).
+- [ ] Add `<BreakIt path="…" recipe="…" />` as `## Break it`. `path` = current `high-level-design/<category>/<dir>` (verify it exists — dirs were renumbered); `recipe` = the justfile recipe base in `high-level-design/justfile` (the `<recipe>-up/-test/-down` set).
 - [ ] Add `<TopicNav>` + register the page in `astro.config.mjs` sidebar.
 - [ ] `npm test` (sim engines) and `npm run build` clean; spot-check light + dark + mobile.
-- [ ] Lab: syslings exercise set under `syslings/exercises/<topic>/` + a `## Lab: fix the broken <thing>` section on the page (see "Adding syslings exercises to a topic")
+- [ ] Lab: syslings exercise set under `syslings/exercises/<topic>/`, then add `syslings="<topic>"` to the page's `<BreakIt>` (see "Adding syslings exercises to a topic")
 
 ## Adding syslings exercises to a topic
 
@@ -128,9 +130,9 @@ mounted into the live Docker stack, file-watch re-checking, progressive hints.
    - nginx passive health holds a failed server out ~10s (`fail_timeout`);
      recovery checks need to account for it.
    - `reload` must surface `nginx -t` errors, or learners debug stale configs.
-7. Add the `## Lab: fix the broken <thing>` section to the topic's mdx page:
-   run commands, a short TUI transcript in a `text` fence, and the ordered
-   exercise list. Cross-reference the sim where an exercise has a sim twin.
+7. Add `syslings="<topic>"` to the page's `<BreakIt>`; the exercise list
+   renders from `exercises.yaml` (collection `syslings-<topic>`, defined in
+   `src/content.config.ts`). Update the landing card to "Read → Sim → Run → Lab".
 8. Add/extend justfile recipes if the topic needs them (`syslings` and
    `syslings-verify` take a topic argument already).
 

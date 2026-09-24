@@ -6,7 +6,7 @@ description: Primary/replica replication, replication lag, read-your-writes cons
 import { Badge } from '@astrojs/starlight/components';
 import Figure from '../../../components/Figure.astro';
 import TopicNav from '../../../components/TopicNav.astro';
-import RunCode from '../../../components/RunCode.astro';
+import BreakIt from '../../../components/BreakIt.astro';
 import ReplicationFlow from '../../../components/ReplicationFlow';
 import SystemDiagram from '../../../components/SystemDiagram';
 
@@ -93,6 +93,12 @@ flowchart LR
 </Figure>
 
 This page focuses on single-leader — the default for PostgreSQL and MySQL.
+
+## Break it
+
+<BreakIt path="scalability/3.4_db_replication" recipe="db-replication" />
+
+## Under the hood
 
 ### Sync vs async replication
 
@@ -232,8 +238,6 @@ Used by DynamoDB, Cassandra, Riak.
 ## This implementation
 
 The Go service runs a primary and two replicas behind Docker. Each replica polls the primary's change log (`/log?since=<version>`) every 500 ms — a simplified stand-in for WAL streaming — so you can write to the primary and watch reads served from a lagging replica: the read-your-writes hazard, for real.
-
-<RunCode path="scalability/3.4_db_replication" recipe="db-replication" />
 
 ## Further reading
 

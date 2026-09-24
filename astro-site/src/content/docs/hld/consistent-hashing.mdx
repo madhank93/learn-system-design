@@ -6,7 +6,7 @@ description: Consistent hashing ring, virtual nodes, minimal key remapping on sc
 import { Badge } from '@astrojs/starlight/components';
 import Figure from '../../../components/Figure.astro';
 import TopicNav from '../../../components/TopicNav.astro';
-import RunCode from '../../../components/RunCode.astro';
+import BreakIt from '../../../components/BreakIt.astro';
 import ConsistentHashingRing from '../../../components/ConsistentHashingRing';
 import SystemDiagram from '../../../components/SystemDiagram';
 
@@ -87,6 +87,12 @@ flowchart TD
     class K_a,K_b,K_c,K_d key
 ```
 </Figure>
+
+## Break it
+
+<BreakIt path="data-and-consistency/4.3_consistent_hashing" recipe="consistent-hashing" />
+
+## Under the hood
 
 ### Adding and removing a node
 
@@ -252,8 +258,6 @@ These systems run it in production:
 | Stale ring views | Clients with outdated topology route to wrong nodes | Versioned ring config; gossip or config service for propagation |
 
 ## This implementation
-
-<RunCode path="data-and-consistency/4.3_consistent_hashing" recipe="consistent-hashing" />
 
 The demo runs a Go ring router (port 8080) backed by 3 nodes (8081/8082/8083), with 150 vnodes per physical node. `test.sh` sends 1000 key lookups and shows the distribution, then adds a 4th node and measures how many keys remapped.
 
