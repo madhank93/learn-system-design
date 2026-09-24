@@ -1,9 +1,7 @@
 // syslings — rustlings-style hands-on system-design exercises where the
 // "compiler" is a live Docker stack.
 //
-//	syslings [topic]          interactive TUI (default topic: load-balancing)
-//	syslings verify [topic]   headless: prove every exercise solvable (CI)
-//	syslings reset <id>       restore an exercise's work file from its template
+// See usage for the command line.
 package main
 
 import (
@@ -13,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -47,6 +46,19 @@ var topics = map[string]struct {
 // so only one stack runs at a time — playing another topic swaps stacks.
 var topicOrder = []string{"load-balancing", "caching"}
 
+const usage = `syslings — fix broken system-design configs against a live Docker stack
+
+Usage:
+  syslings                       pick a topic, then work through its exercises
+  syslings <topic>               jump straight to a topic
+  syslings verify [topic]        prove every exercise is solvable (CI; default: load-balancing)
+  syslings reset <id> [topic]    restore an exercise's file from its template
+
+Topics: %s
+
+Needs Docker running. In the TUI, press ? for keys.
+`
+
 type layout struct {
 	repoRoot     string
 	topic        string
@@ -68,6 +80,9 @@ func run(args []string) error {
 	mode, topic := "tui", "" // empty topic → the TUI's topic picker
 	switch {
 	case len(args) == 0:
+	case args[0] == "-h" || args[0] == "--help" || args[0] == "help":
+		fmt.Printf(usage, strings.Join(topicOrder, ", "))
+		return nil
 	case args[0] == "verify":
 		mode = "verify"
 		topic = "load-balancing"
@@ -120,7 +135,7 @@ func setStackEnv(lay layout) {
 func resolveLayout(topic string) (layout, error) {
 	t, ok := topics[topic]
 	if !ok {
-		return layout{}, fmt.Errorf("unknown topic %q (available: load-balancing)", topic)
+		return layout{}, fmt.Errorf("unknown topic %q (available: %s; see syslings --help)", topic, strings.Join(topicOrder, ", "))
 	}
 	dir, err := os.Getwd()
 	if err != nil {
@@ -204,7 +219,7 @@ func runScript(lay layout, rel string) error {
 func interactive(preselect string) error {
 	if preselect != "" {
 		if _, ok := topics[preselect]; !ok {
-			return fmt.Errorf("unknown topic %q (available: %v)", preselect, topicOrder)
+			return fmt.Errorf("unknown topic %q (available: %s; see syslings --help)", preselect, strings.Join(topicOrder, ", "))
 		}
 	}
 

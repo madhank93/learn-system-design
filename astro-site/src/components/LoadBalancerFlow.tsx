@@ -147,7 +147,7 @@ export default function LoadBalancerFlow() {
       ctx.fillText(`S${s.id}${s.healthy ? '' : ' ✕'}`, g.x0 + 8, y + 14);
       ctx.fillStyle = '#7d8597';
       ctx.textAlign = 'right';
-      ctx.fillText(`${s.total}`, g.x0 + g.boxW - 8, y + 14);
+      ctx.fillText(`${s.total} served`, g.x0 + g.boxW - 8, y + 14);
 
       // serving (clock-shrink)
       if (s.serving) {
@@ -237,6 +237,7 @@ export default function LoadBalancerFlow() {
           { glyph: '●', color: '#4F9DF7', label: 'in-flight request' },
           { glyph: '●', color: '#E67E22', label: 'waiting in queue (reddens as it waits)' },
           { glyph: '✕', color: '#E74C3C', label: 'dropped — queue full or timed out' },
+          { glyph: '▬', color: '#2ECC71', label: 'bar under a server = its capacity' },
         ]}
       />
 

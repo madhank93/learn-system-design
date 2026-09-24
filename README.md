@@ -5,7 +5,8 @@ Hands-on system design in Go. Every concept is a runnable service — not just n
 ```
 high-level-design/     ← 25 HLD topics, 5 real-world designs, 12 distributed challenges
 low-level-design/      ← OOP design problems
-astro-site/            ← docs site (interactive sims + guided labs)
+astro-site/            ← docs site (interactive sims)
+syslings/              ← hands-on trainer: fix broken configs against live Docker stacks
 go.work                ← single workspace, all modules
 ```
 
@@ -13,19 +14,32 @@ go.work                ← single workspace, all modules
 
 ## Quick Start
 
+Prerequisites: Go 1.25+, Docker, and [just](https://github.com/casey/just) (`brew install just`).
+
+**Learn a topic hands-on** — syslings boots the real Nginx + Go stack in Docker
+with a deliberately broken config, then re-checks every time you save a fix:
+
 ```bash
-# Prerequisites: Go 1.25+, Docker, just
-brew install just
+just syslings              # pick a topic (load-balancing, caching)
+just syslings caching      # or jump straight to one
+go run ./syslings          # same thing without just
+```
 
+**Read and play** — the docs site with interactive simulations:
+
+```bash
+cd astro-site && npm install && npm run dev
+```
+
+**Run a topic's stack directly:**
+
+```bash
 cd high-level-design
-
-just unit-test          # all Go unit tests, no Docker required (~23 modules)
-just integration-test   # Testcontainers integration tests (Docker needed)
 just <topic>-up         # start a topic's Docker Compose stack
 just <topic>-test       # run its test script
 just <topic>-down       # tear down
-just <topic>-lab        # guided lab: break things, verify with checkpoints
-just <topic>-lab-check N # verify lab step N (load-balancing has the first lab)
+just unit-test          # all Go unit tests, no Docker required
+just integration-test   # Testcontainers integration tests (Docker needed)
 just dc-build-all       # build all Gossip Glomers challenge binaries
 ```
 

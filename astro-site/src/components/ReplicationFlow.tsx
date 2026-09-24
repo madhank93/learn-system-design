@@ -168,6 +168,7 @@ export default function ReplicationFlow() {
           { glyph: '●', color: '#4F9DF7', label: 'read hitting a replica' },
           { glyph: '○', color: '#2ECC71', label: 'fresh read' },
           { glyph: '○', color: '#F1C40F', label: 'stale read (replica behind)' },
+          { glyph: '−N', color: AMBER, label: 'replica is N versions behind the primary (vN = data version)' },
         ]}
       />
 

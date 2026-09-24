@@ -132,7 +132,7 @@ mounted into the live Docker stack, file-watch re-checking, progressive hints.
    - `reload` must surface `nginx -t` errors, or learners debug stale configs.
 7. Add `syslings="<topic>"` to the page's `<BreakIt>`; the exercise list
    renders from `exercises.yaml` (collection `syslings-<topic>`, defined in
-   `src/content.config.ts`). Update the landing card to "Read → Sim → Run → Lab".
+   `src/content.config.ts`). Update the landing card link to "See → Play → Break it · with exercises".
 8. Add/extend justfile recipes if the topic needs them (`syslings` and
    `syslings-verify` take a topic argument already).
 
