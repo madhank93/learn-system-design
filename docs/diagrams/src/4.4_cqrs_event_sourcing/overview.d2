@@ -1,0 +1,83 @@
+# CQRS and Event Sourcing — Architecture
+# d2 --sketch --layout elk overview.d2 ../../svg/4.4_cqrs_event_sourcing/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+command_side: Command Side (Write) {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  cmd_handler: Command Handler {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  event_store: Event Store\n(append-only) {
+    shape: cylinder
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  cmd_handler -> event_store: append event
+}
+
+query_side: Query Side (Read) {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  read_model: Projection\n(Read Model) {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  query_handler: Query Handler {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  read_model -> query_handler
+}
+
+client -> command_side.cmd_handler: PlaceOrder command
+client -> query_side.query_handler: GET /orders/1
+command_side.event_store -> query_side.read_model: publish (Kafka) {
+  style.stroke-dash: 5
+  style.animated: true
+}
+
+scenarios: {
+  projection_rebuild: {
+    query_side.read_model: Projection\n⚠ stale — rebuilding {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    command_side.event_store -> query_side.read_model: replay all events {
+      style.stroke: "#3498DB"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+  }
+}

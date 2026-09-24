@@ -1,0 +1,69 @@
+# OAuth 2.0 and JWT — Authorization Code Flow
+# d2 --sketch --layout elk overview.d2 ../../svg/8.1_oauth_jwt/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+user: User {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+client_app: Client App\n(SPA / Mobile) {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+auth_server: Authorization Server\n(Auth0 / Keycloak) {
+  shape: hexagon
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+resource_server: Resource Server\n(API) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+user -> client_app: login
+client_app -> auth_server: GET /authorize
+auth_server -> user: login/consent
+user -> auth_server: credentials
+auth_server -> client_app: 302 + code
+client_app -> auth_server: POST /token + code
+auth_server -> client_app: access + refresh token
+client_app -> resource_server: GET /api\n+ Bearer JWT
+resource_server -> resource_server: validate JWT
+resource_server -> client_app: 200 OK
+
+scenarios: {
+  token_expired: {
+    resource_server: Resource Server\n→ 401 Unauthorized {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+
+  invalid_signature: {
+    resource_server: Resource Server\n→ 401 (bad signature) {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

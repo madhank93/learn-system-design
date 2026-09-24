@@ -1,0 +1,109 @@
+# SQL vs NoSQL — Comparison and Use Cases
+# d2 --sketch --layout elk overview.d2 ../../svg/4.2_sql_vs_nosql/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+sql_side: SQL (Relational) {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  rdbms: PostgreSQL / MySQL {
+    shape: cylinder
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  users_table: users (id, name, email) {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  orders_table: orders (id, user_id, amount) {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  use_cases: Use cases:\nFinancial, e-commerce,\nreporting, joins {
+    style.fill: "#F1EEE8"
+    style.stroke: "#2471A3"
+  }
+
+  users_table -> orders_table: FK user_id {
+    style.stroke: "#2471A3"
+    style.stroke-width: 2
+  }
+  rdbms -> users_table
+  rdbms -> orders_table
+}
+
+nosql_side: NoSQL {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  document: Document DB\n(MongoDB) {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  kv: Key-Value\n(Redis / DynamoDB) {
+    shape: cylinder
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  column: Column-Family\n(Cassandra) {
+    shape: cylinder
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  graph: Graph DB\n(Neo4j) {
+    shape: cylinder
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+scenarios: {
+  join_heavy: {
+    sql_side.rdbms: PostgreSQL\n✓ JOIN fast (10ms) {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+    nosql_side.document: MongoDB\n(slow JOIN equivalent) {
+      style.opacity: 0.4
+    }
+  }
+
+  schema_flexible: {
+    nosql_side.document: MongoDB\n✓ Flexible schema {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+      style.stroke-width: 3
+    }
+    sql_side.rdbms: PostgreSQL\n(schema migration needed) {
+      style.opacity: 0.4
+    }
+  }
+}

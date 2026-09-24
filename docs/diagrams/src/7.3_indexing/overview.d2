@@ -1,0 +1,77 @@
+# Indexing — B-Tree and Index Types
+# d2 --sketch --layout elk overview.d2 ../../svg/7.3_indexing/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+btree: B-Tree Structure {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  root: "Root Node\n[20, 40]" {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  int1: "Internal [10,15]" {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  int2: "Internal [25,30]" {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  int3: "Internal [45,55]" {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  leaf1: "Leaf 5,8,10" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  leaf2: "Leaf 15,18,20" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  leaf3: "Leaf 25,28,30" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  root -> int1: keys < 20
+  root -> int2: 20 ≤ keys < 40
+  root -> int3: keys ≥ 40
+  int1 -> leaf1
+  int1 -> leaf2
+  int2 -> leaf3
+}
+
+scenarios: {
+  index_hit: {
+    btree.root: Root Node\n(Index Scan) {
+      style.stroke-width: 4
+    }
+  }
+}

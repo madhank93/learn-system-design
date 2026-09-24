@@ -1,0 +1,89 @@
+# Distributed Tracing — OpenTelemetry + Jaeger
+# d2 --sketch --layout elk overview.d2 ../../svg/6.3_distributed_tracing/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+user: User {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+services: Request Path {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  gateway: API Gateway\n(span: 50ms) {
+    shape: hexagon
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  order_svc: Order Service\n(span: 120ms) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  payment_svc: Payment Service\n(span: 80ms) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+}
+
+collector: Jaeger Collector {
+  shape: cloud
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+storage: Trace Storage\n(Cassandra) {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+jaeger_ui: Jaeger UI {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+user -> services.gateway
+services.gateway -> collector: spans {
+  style.stroke-dash: 5
+}
+services.order_svc -> collector: spans {
+  style.stroke-dash: 5
+}
+services.payment_svc -> collector: spans {
+  style.stroke-dash: 5
+}
+collector -> storage
+storage -> jaeger_ui
+
+scenarios: {
+  slow_span: {
+    services.payment_svc: Payment Service\n⚠ SLOW (2000ms) {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

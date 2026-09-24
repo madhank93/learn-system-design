@@ -1,0 +1,96 @@
+# Availability and SLAs — Error Budget and SLO Flow
+# d2 --sketch --layout elk request-flow.d2 ../../svg/1.5_availability_and_slas/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+sla_table: SLA Tiers {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  tier99: 99% SLA\n= 87.6h downtime/yr {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  tier999: 99.9% SLA\n= 8.76h downtime/yr {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  tier9999: 99.99% SLA\n= 52min downtime/yr {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  tier99999: 99.999% SLA\n= 5.26min downtime/yr {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+health_check: Health Monitor {
+  style.fill: "#F1EEE8"
+  style.stroke: "#F39C12"
+}
+
+alert: PagerDuty Alert {
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+oncall: On-Call Engineer {
+  shape: person
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+}
+
+failover: Automated Failover\n(~60s) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+budget: Error Budget Tracker {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+}
+
+health_check -> alert: probe fails 2x {
+  style.stroke: "#E74C3C"
+  style.stroke-width: 2
+}
+alert -> oncall: page
+alert -> failover: auto-trigger {
+  style.stroke-dash: 5
+  style.animated: true
+}
+oncall -> failover: ack + confirm
+failover -> budget: incident closed\n−2min budget {
+  style.stroke: "#3498DB"
+}
+
+scenarios: {
+  budget_exhausted: {
+    budget: Error Budget\n⚠ EXHAUSTED {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

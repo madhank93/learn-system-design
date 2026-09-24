@@ -1,0 +1,67 @@
+# Load balancer — algorithm comparison (2-column grid)
+# One line per algorithm; trade-offs live in the page prose.
+
+vars: { d2-config: { layout-engine: elk } }
+
+grid-columns: 2
+grid-gap: 32
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+rr: "Round robin" {
+  width: 360
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+  pick: "1 → 2 → 3 → 1 …" {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+wrr: "Weighted round robin" {
+  width: 360
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+  pick: "weight 3 → 3× traffic" {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+lc: "Least connections" {
+  width: 360
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+  pick: "fewest open conns" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+ip: "IP hash" {
+  width: 360
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+  pick: "hash(ip) % N" {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+ch: "Consistent hashing" {
+  width: 360
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+  pick: "ring — K/N keys move" {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+}

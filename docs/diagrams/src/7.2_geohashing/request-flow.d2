@@ -1,0 +1,68 @@
+# Geohashing — Find Nearby Drivers
+# d2 --sketch --layout elk request-flow.d2 ../../svg/7.2_geohashing/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+driver: Driver App {
+  shape: person
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+}
+
+rider: Rider App {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+location_svc: Location Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+redis_geo: Redis\n(GEOADD index) {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+matching_svc: Matching Service {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+driver -> location_svc: lat=37.7749, lng=-122.4194 (every 250ms)
+location_svc -> redis_geo: GEOADD drivers -122.4194 37.7749 "driver:42"
+rider -> matching_svc: request ride at (37.7750, -122.4190)
+matching_svc -> redis_geo: GEOSEARCH drivers\nFROMCOORD 37.775 -122.419\nBYRADIUS 5 km ASC
+redis_geo -> matching_svc: "[driver:42 0.12km, driver:7 0.8km]"
+matching_svc -> rider: 2 drivers nearby\nETA: driver:42 in 2min
+
+scenarios: {
+  precision_tradeoff: {
+    redis_geo: Redis\nGeohash precision 6\n(±1.2km cells) {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    matching_svc: Matching Service\n(query 9 cells) {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

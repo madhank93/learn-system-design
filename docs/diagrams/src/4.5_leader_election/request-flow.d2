@@ -1,0 +1,109 @@
+# Leader Election — Raft election, animated (steps: one change per frame)
+# GIF frames: ① healthy ② crash ③ candidacy ④ quorum ⑤ new leader
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+note: "① healthy — N1 leads (term 1)" {
+  shape: text
+  style.font-color: "#424949"
+  style.bold: true
+}
+
+n1: "N1 — LEADER" {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+n2: N2 {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+n3: N3 {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+n4: N4 {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+n5: N5 {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+n1 -> n2: hb { style.stroke-dash: 5 }
+n1 -> n3: hb { style.stroke-dash: 5 }
+
+steps: {
+  1: {}
+  2: {
+    note: "② N1 crashes — heartbeats stop"
+    n1: "N1\n⚠ CRASHED" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+    }
+    (n1 -> n2)[0].style.opacity: 0.2
+    (n1 -> n3)[0].style.opacity: 0.2
+  }
+  3: {
+    note: "③ timeout fires — N3 candidate, term 2"
+    n3: "N3\nCANDIDATE" {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+    }
+    n3 -> n2: vote? {
+      style.stroke: "#D35400"
+      style.animated: true
+    }
+    n3 -> n4: vote? {
+      style.stroke: "#D35400"
+      style.animated: true
+    }
+    n3 -> n5: vote? {
+      style.stroke: "#D35400"
+      style.animated: true
+    }
+  }
+  4: {
+    note: "④ 3 of 5 votes — quorum reached"
+    n2 -> n3: yes {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+    }
+    n4 -> n3: yes {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+    }
+  }
+  5: {
+    note: "⑤ N3 leads — term 2"
+    n3: "N3 — LEADER\nterm 2" {
+      shape: hexagon
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+    }
+    n3 -> n2: hb {
+      style.stroke-dash: 5
+      style.animated: true
+    }
+    n3 -> n5: hb {
+      style.stroke-dash: 5
+      style.animated: true
+    }
+  }
+}

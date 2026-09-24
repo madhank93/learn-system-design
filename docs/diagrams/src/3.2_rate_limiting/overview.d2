@@ -1,0 +1,160 @@
+# Rate Limiting — Algorithm Comparison
+# d2 --sketch --layout elk overview.d2 ../../svg/3.2_rate_limiting/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+token_bucket: Token Bucket {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  bucket: Bucket\n(capacity: 100) {
+    shape: cylinder
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  refill: +10 tokens/sec {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  consume: consume 1 token\nper request {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  overflow: 429 when empty {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  refill -> bucket: fill
+  bucket -> consume
+  consume -> overflow: no tokens {
+    style.stroke-dash: 5
+  }
+}
+
+leaky_bucket: Leaky Bucket {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  inlet: Requests (burst OK) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  queue_lb: Queue (capacity: 100) {
+    shape: queue
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  outlet: 10 req/s fixed output {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  drop: 429 (queue full) {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  inlet -> queue_lb
+  queue_lb -> outlet: drip
+  queue_lb -> drop: overflow {
+    style.stroke-dash: 5
+  }
+}
+
+fixed_window: Fixed Window {
+  style.fill: "#F1EEE8"
+  style.stroke: "#E67E22"
+
+  window1: "Window [0s-60s]\ncount: 95/100" {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  window2: "Window [60s-120s]\ncount: 0/100" {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  edge: "⚠ Boundary burst:\nt=59s: 95 + t=61s: 95\n= 190 req in 2s!" {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  window1 -> window2: reset at 60s
+  window2 -> edge: exploit {
+    style.stroke-dash: 5
+  }
+}
+
+sliding_window: Sliding Window Log {
+  style.fill: "#F1EEE8"
+  style.stroke: "#8E44AD"
+
+  log: Timestamp Log {
+    shape: cylinder
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  clean: Evict entries\n> 60s old {
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  count: Count remaining\nvs limit {
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  log -> clean -> count
+}
+
+scenarios: {
+  burst_allowed: {
+    token_bucket.bucket: Bucket (100 tokens)\n→ burst drain {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+  }
+
+  fixed_window_exploit: {
+    fixed_window.edge: ⚠ 2× RATE EXPLOIT\nat window boundary {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+      style.stroke-width: 4
+    }
+  }
+}

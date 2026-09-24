@@ -1,0 +1,43 @@
+# Caching — Write-through
+# One idea: write hits cache and DB together, readers never see stale.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+app: App {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+redis: Redis {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+db: PostgreSQL {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+client -> app: "1. update price"
+app -> db: "2. UPDATE"
+app -> redis: "3. SET" {
+  style.stroke: "#27AE60"
+}
+app -> client: "4. 200 OK"

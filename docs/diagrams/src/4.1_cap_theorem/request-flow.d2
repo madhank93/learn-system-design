@@ -1,0 +1,90 @@
+# CAP Theorem — Partition in Action
+# d2 --sketch --layout elk request-flow.d2 ../../svg/4.1_cap_theorem/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+node_a: Node A {
+  shape: cylinder
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+node_b: Node B {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+node_c: Node C {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+client1: Client 1 {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+client2: Client 2 {
+  shape: person
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+}
+
+node_a -> node_b: sync (healthy)
+node_b -> node_a: sync (healthy)
+
+client1 -> node_a: write x=2
+node_a -> node_b: replicate x=2
+
+client2 -> node_c: read x?
+
+cp_result: CP Result\n503 Error {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+ap_result: AP Result\nx=1 (stale) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+node_c -> cp_result: CP choice {
+  style.stroke-dash: 5
+}
+node_c -> ap_result: AP choice {
+  style.stroke-dash: 5
+}
+
+scenarios: {
+  partition_healed: {
+    node_a -> node_c: partition healed\nsync x=2 {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+    node_c: Node C\n(converged, x=2) {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

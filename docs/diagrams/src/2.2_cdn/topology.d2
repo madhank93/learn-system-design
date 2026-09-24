@@ -1,0 +1,105 @@
+# CDN — PoP topology
+# One idea: users hit the nearest PoP; only misses travel to origin.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+us: "User — US" {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+eu: "User — EU" {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+ap: "User — APAC" {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+pop_us: "PoP Virginia" {
+  shape: cloud
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+pop_eu: "PoP Frankfurt" {
+  shape: cloud
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+pop_ap: "PoP Singapore" {
+  shape: cloud
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+origin: Origin {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+us -> pop_us
+eu -> pop_eu
+ap -> pop_ap
+pop_us -> origin: miss { style.stroke-dash: 5 }
+pop_eu -> origin: miss { style.stroke-dash: 5 }
+pop_ap -> origin: miss { style.stroke-dash: 5 }
+
+scenarios: {
+  cache_hit: {
+    pop_us: "PoP Virginia ✓" {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+    }
+    pop_eu: "PoP Frankfurt ✓" {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+    }
+    pop_ap: "PoP Singapore ✓" {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+    }
+    origin: "Origin — idle" {
+      style.opacity: 0.3
+    }
+    (pop_us -> origin)[0].style.opacity: 0.2
+    (pop_eu -> origin)[0].style.opacity: 0.2
+    (pop_ap -> origin)[0].style.opacity: 0.2
+  }
+
+  cache_purge: {
+    pop_us: "PoP — purged" {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+    }
+    pop_eu: "PoP — purged" {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+    }
+    pop_ap: "PoP — purged" {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+    }
+    pop_us -> origin: re-pull {
+      style.stroke: "#D35400"
+      style.animated: true
+    }
+  }
+}

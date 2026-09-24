@@ -1,0 +1,135 @@
+# DB Sharding — Horizontal Partitioning Architecture
+# d2 --sketch --layout elk overview.d2 ../../svg/3.3_db_sharding/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: App Server {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+router: Shard Router {
+  shape: hexagon
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+shards: Shards {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  s0: Shard 0\nuser_id 0–24M {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  s1: Shard 1\nuser_id 25M–49M {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  s2: Shard 2\nuser_id 50M–74M {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  s3: Shard 3\nuser_id 75M–99M {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  r0: Shard 0 Replica {
+    shape: cylinder
+    style.fill: "#5D6D7E"
+    style.stroke: "#808B96"
+    style.font-color: "#FFFFFF"
+  }
+
+  r1: Shard 1 Replica {
+    shape: cylinder
+    style.fill: "#5D6D7E"
+    style.stroke: "#808B96"
+    style.font-color: "#FFFFFF"
+  }
+
+  s0 -> r0: async replica {
+    style.stroke-dash: 5
+  }
+  s1 -> r1: async replica {
+    style.stroke-dash: 5
+  }
+}
+
+client -> router: query(user_id=42)
+router -> shards.s0: hash(42)%4=2… route
+router -> shards.s1
+router -> shards.s2
+router -> shards.s3
+
+scenarios: {
+  hotspot: {
+    shards.s2: Shard 2\n⚠ HOTSPOT {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    shards.s0: Shard 0\n(underloaded) {
+      style.opacity: 0.4
+    }
+    shards.s1: Shard 1\n(underloaded) {
+      style.opacity: 0.4
+    }
+    shards.s3: Shard 3\n(underloaded) {
+      style.opacity: 0.4
+    }
+  }
+
+  shard_split: {
+    shards.s1: Shard 1\n(splitting) {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    shards.s1_a: Shard 1a\nuser_id 25M–37M {
+      shape: cylinder
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+    shards.s1_b: Shard 1b\nuser_id 37M–49M {
+      shape: cylinder
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+    shards.s1 -> shards.s1_a: migrate {
+      style.animated: true
+      style.stroke: "#3498DB"
+    }
+    shards.s1 -> shards.s1_b: migrate {
+      style.animated: true
+      style.stroke: "#3498DB"
+    }
+  }
+}

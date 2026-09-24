@@ -1,0 +1,65 @@
+# Retry and backoff — idempotent retry lifecycle (animated steps)
+# Fixed topology; each step adds one attempt or wait.
+# Frames: ① attempt 1 fails → ② wait 1 s → ③ attempt 2 fails → ④ wait 2 s → ⑤ attempt 3 succeeds
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+svc: "Payment service" {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+note: "retry lifecycle — 5 steps" {
+  shape: text
+  near: top-center
+  style.font-size: 18
+  style.bold: true
+}
+
+steps: {
+  1: {
+    note: "① POST /charge, key idem-abc → 503"
+    client -> svc: "1. POST ✖ 503" {
+      style.stroke: "#E74C3C"
+      style.animated: true
+    }
+  }
+  2: {
+    note: "② wait 1 s + jitter — service breathing room"
+    (client -> svc)[0].style.opacity: 0.3
+    (client -> svc)[0].style.animated: false
+  }
+  3: {
+    note: "③ retry, same idempotency key → 503 again"
+    client -> svc: "2. retry ✖ 503" {
+      style.stroke: "#D35400"
+      style.animated: true
+    }
+  }
+  4: {
+    note: "④ wait 2 s + jitter — backoff doubles"
+    (client -> svc)[1].style.opacity: 0.3
+    (client -> svc)[1].style.animated: false
+  }
+  5: {
+    note: "⑤ attempt 3 → 200 OK — charged exactly once"
+    client -> svc: "3. retry ✓ 200" {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

@@ -1,0 +1,125 @@
+# ACID vs BASE — Consistency Models Comparison
+# d2 --sketch --layout elk overview.d2 ../../svg/1.6_acid_vs_base/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+acid: ACID (Relational) {
+  direction: right
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  client_a: App {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  txn: Transaction Manager {
+    style.fill: "#2471A3"
+    style.stroke: "#1A5276"
+    style.font-color: "#FFFFFF"
+  }
+
+  db_acid: PostgreSQL {
+    shape: cylinder
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  client_a -> txn: BEGIN
+  txn -> db_acid: write ops
+  db_acid -> txn: ok
+  txn -> client_a: COMMIT
+}
+
+base_model: BASE (Distributed) {
+  direction: right
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  client_b: App {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  replica1: Replica 1\n(us-east) {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  replica2: Replica 2\n(eu-west) {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  replica3: Replica 3\n(ap-south) {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  client_b -> replica1: write (ack immediately)
+  replica1 -> replica2: async sync {
+    style.stroke-dash: 5
+    style.stroke: "#27AE60"
+  }
+  replica1 -> replica3: async sync {
+    style.stroke-dash: 5
+    style.stroke: "#27AE60"
+  }
+  replica2 -> replica3: gossip {
+    style.stroke-dash: 5
+    style.opacity: 0.5
+  }
+}
+
+scenarios: {
+  acid_rollback: {
+    acid.txn: Transaction Manager\n→ ROLLBACK {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    acid.db_acid: PostgreSQL\n(state unchanged) {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+  }
+
+  base_conflict: {
+    base_model.replica1: Replica 1\nx=5 (new write) {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    base_model.replica2: Replica 2\nx=3 (stale) {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    base_model.replica1 -> base_model.replica2: converging... {
+      style.stroke: "#27AE60"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+  }
+}

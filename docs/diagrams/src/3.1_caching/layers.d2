@@ -1,0 +1,68 @@
+# Caching — Layers
+# One idea: every layer between user and DB can absorb the read.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+user: User {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+cdn: CDN {
+  shape: cloud
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+app: App {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+  style.bold: true
+}
+
+redis: Redis {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+db: Postgres {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+user -> cdn: miss
+cdn -> app: miss
+app -> redis: miss
+redis -> db: read
+
+scenarios: {
+  cache_hit: {
+    cdn: "CDN ✓ HIT" {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+    }
+    app.style.opacity: 0.3
+    redis.style.opacity: 0.3
+    db: "Postgres idle" {
+      style.opacity: 0.3
+    }
+    user -> cdn: "~5ms" {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

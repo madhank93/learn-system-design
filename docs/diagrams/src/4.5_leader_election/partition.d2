@@ -1,0 +1,55 @@
+# Leader Election — Network partition
+# One idea: only the majority side can elect; quorum prevents split-brain.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+majority: "Majority — 3 of 5" {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  n3: "N3 — LEADER\nterm 2" {
+    shape: hexagon
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+  n1: N1 {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+  n2: N2 {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+  n3 -> n1: hb { style.stroke-dash: 5 }
+  n3 -> n2: hb { style.stroke-dash: 5 }
+}
+
+minority: "Minority — 2 of 5" {
+  style.fill: "#F1EEE8"
+  style.stroke: "#E74C3C"
+
+  n4: "N4\nno quorum ✗" {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+  n5: "N5\nno quorum ✗" {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+majority -> minority: "✂ partition" {
+  style.stroke: "#E74C3C"
+  style.stroke-dash: 3
+}

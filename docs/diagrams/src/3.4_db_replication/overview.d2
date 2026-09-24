@@ -1,0 +1,99 @@
+# DB replication — primary-replica topology
+# One idea: writes go to one primary; reads spread across async replicas.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+app: "App server" {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+  style.bold: true
+}
+
+primary: "Primary\n(writes)" {
+  shape: cylinder
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+replicas: "Read replicas" {
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+
+  r1: "Replica 1\nus-east" {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  r2: "Replica 2\nus-west" {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  r3: "Replica 3\neu-west" {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+app -> primary: "1. write"
+primary -> replicas.r1: "2. WAL" {
+  style.stroke-dash: 5
+  style.stroke: "#27AE60"
+}
+primary -> replicas.r2: "2. WAL" {
+  style.stroke-dash: 5
+  style.stroke: "#27AE60"
+}
+primary -> replicas.r3: "2. WAL" {
+  style.stroke-dash: 5
+  style.stroke: "#27AE60"
+}
+app -> replicas.r1: "3. read" {
+  style.stroke: "#27AE60"
+}
+
+scenarios: {
+  replica_lag: {
+    replicas.r2: "Replica 2\n⚠ lag 3 s" {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    (app -> replicas.r1)[0]: "3. read — R2 bypassed" {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+    }
+  }
+
+  primary_failure: {
+    primary: "Primary\n✖ FAILED" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    replicas.r1: "Replica 1\n→ new primary" {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+    (app -> replicas.r1)[0]: "writes" {
+      style.stroke: "#3498DB"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

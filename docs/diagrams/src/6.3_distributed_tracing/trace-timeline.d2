@@ -1,0 +1,46 @@
+# Distributed Tracing — Trace Timeline (Gantt view in Jaeger UI)
+# d2 --sketch --layout elk trace-timeline.d2 ../../svg/6.3_distributed_tracing/trace-timeline.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+trace_bar: TraceID: abc-123 (nested spans) {
+  direction: down
+  style.fill: "#F1EEE8"
+  style.stroke: "#D35400"
+
+  gw_span: Gateway\n0–50ms {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+  ord_span: Order\n50–170ms {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+  pay_span: Payment\n80–160ms {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+  db_span: DB\n150–160ms {
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  gw_span -> ord_span: child
+  ord_span -> pay_span: child
+  pay_span -> db_span: child
+}

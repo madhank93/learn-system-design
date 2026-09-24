@@ -1,0 +1,105 @@
+# Consistent Hashing — Hash Ring Architecture
+# d2 --sketch --layout elk overview.d2 ../../svg/4.3_consistent_hashing/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+ring: Hash Ring (0–360) {
+  style.fill: "#F1EEE8"
+  style.stroke: "#AEB6BF"
+
+  node_a: Node A\n(pos=45) {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  node_b: Node B\n(pos=120) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  node_c: Node C\n(pos=200) {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  node_d: Node D\n(pos=300) {
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  node_a -> node_b: ring (clockwise)
+  node_b -> node_c: ring
+  node_c -> node_d: ring
+  node_d -> node_a: ring (wraps)
+}
+
+key_example: Key Routing {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  key1: key "user:123"\nhash=67 → Node B {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  key2: key "product:42"\nhash=250 → Node D {
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+vnodes: Virtual Nodes (vnodes) {
+  style.fill: "#F1EEE8"
+  style.stroke: "#E67E22"
+
+  vn: Node B occupies:\n120, 180, 240 (3 vnodes) {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+scenarios: {
+  node_removed: {
+    ring.node_c: Node C\n✗ REMOVED {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    ring.node_c -> ring.node_d: keys → D {
+      style.stroke: "#E74C3C"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+  }
+
+  hotspot: {
+    ring.node_c: Node C\n⚠ 60% of keys! {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    vnodes.vn: Add vnodes → even {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

@@ -1,0 +1,122 @@
+# Bloom Filter — Internals and Use Case
+# d2 --sketch --layout elk overview.d2 ../../svg/7.1_bloom_filter/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+bit_array: Bit Array (16 positions) {
+  style.fill: "#F1EEE8"
+  style.stroke: "#AEB6BF"
+
+  b0: "0\n[0]" {
+    style.fill: "#F1EEE8"
+    style.stroke: "#AEB6BF"
+  }
+  b1: "1\n[1]" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+  b2: "0\n[2]" {
+    style.fill: "#F1EEE8"
+    style.stroke: "#AEB6BF"
+  }
+  b3: "1\n[3]" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+  b7: "1\n[7]" {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+  b11: "1\n[11]" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+  b13: "1\n[13]" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+hash_fns: Hash Functions {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  h1: "h1(x) = md5(x) mod 16" {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+  h2: "h2(x) = sha1(x) mod 16" {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+  h3: "h3(x) = murmur(x) mod 16" {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+insert: Insert "apple" {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  step1: h1("apple")=3\nh2("apple")=7\nh3("apple")=11 {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+lookup: Lookup Results {
+  style.fill: "#F1EEE8"
+  style.stroke: "#F39C12"
+
+  hit: "apple → bits 3,7,11 all 1\n→ PROBABLY IN SET ✓" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  miss: "cherry → h1=2 → bit[2]=0\n→ DEFINITELY NOT IN SET ✗" {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  fp: "grape → bits 1,7,13 all 1\n→ FALSE POSITIVE!" {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+hash_fns -> insert.step1 -> bit_array
+bit_array -> lookup
+
+scenarios: {
+  false_positive_rate: {
+    bit_array: Bit Array\n(50% full — high FPR!) {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

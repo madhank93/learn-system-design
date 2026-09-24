@@ -1,0 +1,82 @@
+# Distributed Locking — Redis Lock Lifecycle
+# d2 --sketch --layout elk request-flow.d2 ../../svg/5.3_distributed_locking/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+svc_a: Service A {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+svc_b: Service B {
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+redis: Redis (5 nodes) {
+  shape: cylinder
+  style.fill: "#E74C3C"
+  style.stroke: "#C0392B"
+  style.font-color: "#FFFFFF"
+}
+
+inventory: Inventory DB {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+release: Release Lock\n(DEL if value=uuid-A) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+sold_out: Sold Out\n(inventory=0) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+svc_a -> redis: SET lock NX EX 30\n→ 3/5 ✓
+svc_b -> redis: SET lock NX EX 30\n→ 2/5 ✗ {
+  style.stroke-dash: 5
+  style.opacity: 0.5
+}
+svc_a -> inventory: READ inventory=1
+svc_a -> inventory: UPDATE inventory=0
+svc_a -> release: DEL lock (lua)
+release -> svc_b: lock available — retry
+svc_b -> redis: acquire lock (retry)
+svc_b -> inventory: READ inventory=0
+inventory -> svc_b: 0 — out of stock
+svc_b -> sold_out
+
+scenarios: {
+  crash_recovery: {
+    svc_a: Service A\n⚠ CRASHED (holding lock) {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    redis: Redis\n(TTL expires in 30s) {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

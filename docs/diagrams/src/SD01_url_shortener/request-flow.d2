@@ -1,0 +1,76 @@
+# URL Shortener — Shorten and Redirect Flow
+# d2 --sketch --layout elk request-flow.d2 ../../svg/SD01_url_shortener/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+user: User {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+write_svc: Write Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+id_gen: Snowflake ID → Base62\n(worker=3 → \"B4Z1\") {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+db: URL Store {
+  shape: cylinder
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+cache: Redis {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+read_svc: Read Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+user -> write_svc: "POST /shorten"
+write_svc -> id_gen: generate
+id_gen -> db: INSERT code=B4Z1
+db -> user: "201 short_url"
+
+user -> read_svc: GET /B4Z1
+read_svc -> cache: GET B4Z1
+cache -> read_svc: (nil) — MISS
+read_svc -> db: SELECT code=B4Z1
+db -> read_svc: long URL
+read_svc -> cache: SET B4Z1 EX 86400
+read_svc -> user: 302 Location
+
+scenarios: {
+  collision: {
+    id_gen: Snowflake ID → Base62\n(collision — retry) {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

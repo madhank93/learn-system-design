@@ -1,0 +1,95 @@
+# URL Shortener — System Architecture
+# d2 --sketch --layout elk overview.d2 ../../svg/SD01_url_shortener/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+user: User {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+gateway: API Gateway\n(+ CDN / browser cache) {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+write_svc: Write Service\n(POST /shorten) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+read_svc: Read Service\n(GET /:code) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+id_gen: ID Generator\n(Snowflake → Base62) {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+url_db: URL Store\n(PostgreSQL) {
+  shape: cylinder
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+cache: Redis Cache\n(short_code → long_url) {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+queue: Click Events → Analytics\n(Kafka) {
+  shape: queue
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+user -> gateway: request
+gateway -> write_svc: POST /shorten
+gateway -> read_svc: GET /:code
+write_svc -> id_gen: generate ID
+id_gen -> url_db: INSERT
+read_svc -> cache: GET code
+cache -> url_db: MISS → lookup {
+  style.stroke-dash: 5
+}
+url_db -> cache: SET + return
+read_svc -> queue: click event {
+  style.stroke-dash: 5
+  style.animated: true
+}
+
+scenarios: {
+  cache_hit: {
+    cache: Redis Cache\n✓ HIT (99%) {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+    url_db: URL Store {
+      style.opacity: 0.2
+    }
+  }
+}

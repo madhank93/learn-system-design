@@ -1,0 +1,55 @@
+# DB replication — split brain
+# One idea: two nodes both believe they are primary; fencing kills one.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+app: "App server" {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+old: "Old primary\n✖ isolated" {
+  shape: cylinder
+  style.fill: "#E74C3C"
+  style.stroke: "#C0392B"
+  style.font-color: "#FFFFFF"
+}
+
+new: "New primary" {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+fence: "Fencing agent\n(STONITH)" {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+app -> old: "stale writes ⚠" {
+  style.stroke: "#E74C3C"
+  style.stroke-dash: 5
+  style.opacity: 0.5
+}
+app -> new: "writes" {
+  style.stroke: "#27AE60"
+  style.stroke-width: 3
+}
+fence -> old: "1. kill" {
+  style.stroke: "#E74C3C"
+  style.stroke-width: 3
+  style.animated: true
+}
+fence -> new: "2. confirm sole primary" {
+  style.stroke: "#27AE60"
+  style.stroke-dash: 5
+}

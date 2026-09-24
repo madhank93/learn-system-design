@@ -1,0 +1,93 @@
+# Load balancer — HA pair + backend pool
+# One idea: traffic enters via the active LB; standby waits on VRRP heartbeat.
+# Scenario server_down: Server 3 fails probes and leaves rotation.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+lb_pair: "LB pair" {
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+
+  active: "Active LB" {
+    shape: hexagon
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+    style.bold: true
+  }
+
+  standby: "Standby LB" {
+    shape: hexagon
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  active <-> standby: heartbeat {
+    style.stroke-dash: 5
+    style.stroke: "#5D6D7E"
+  }
+}
+
+pool: "Backend pool" {
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+
+  s1: "Server 1" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  s2: "Server 2" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  s3: "Server 3" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+client -> lb_pair.active: "1. request"
+lb_pair.active -> pool.s1: "2. route"
+lb_pair.active -> pool.s2: "2. route"
+lb_pair.active -> pool.s3: "2. route"
+lb_pair.active -> pool.s3: "probe" {
+  style.stroke-dash: 5
+  style.stroke: "#5D6D7E"
+}
+
+scenarios: {
+  server_down: {
+    pool.s3: "Server 3 ✖ down" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    (lb_pair.active -> pool.s3)[0]: "excluded" {
+      style.stroke: "#E74C3C"
+      style.stroke-dash: 7
+      style.opacity: 0.4
+    }
+    (lb_pair.active -> pool.s3)[1]: "probe ✖" {
+      style.stroke: "#E74C3C"
+      style.stroke-dash: 5
+    }
+  }
+}

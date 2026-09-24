@@ -1,0 +1,63 @@
+# Video Streaming — Upload and Transcoding Pipeline
+# d2 --sketch --layout elk upload-pipeline.d2 ../../svg/SD05_video_streaming/upload-pipeline.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+upload: Upload Path {
+  style.fill: "#F1EEE8"
+  style.stroke: "#D35400"
+
+  creator: Content Creator {
+    shape: person
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+  }
+
+  upload_svc: Upload Service {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  raw_storage: Raw Video\n(S3) {
+    shape: cylinder
+    style.fill: "#5D6D7E"
+    style.stroke: "#808B96"
+    style.font-color: "#FFFFFF"
+  }
+
+  transcoder: Transcoding Pipeline\n(FFmpeg workers) {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  segments: Segments (S3)\n1080p, 720p, 480p, 360p {
+    shape: cylinder
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  creator -> upload_svc -> raw_storage -> transcoder -> segments
+}
+
+cdn_origin: CDN Origin {
+  shape: cloud
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+upload.segments -> cdn_origin: ingest

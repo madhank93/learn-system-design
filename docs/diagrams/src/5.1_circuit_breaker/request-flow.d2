@@ -1,0 +1,111 @@
+# Circuit breaker — trip and recovery (animated steps)
+# Fixed topology; the breaker node changes state per frame.
+# Frames: ① closed → ② failures mount → ③ trips open → ④ half-open probe → ⑤ recovered
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+app: "App server" {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+cb: "Breaker\nCLOSED" {
+  shape: hexagon
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+  style.bold: true
+}
+
+payment: "Payment service" {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+app -> cb: "request" {
+  style.stroke: "#3498DB"
+}
+cb -> payment: "forward" {
+  style.stroke: "#27AE60"
+}
+
+note: "trip and recovery — 5 steps" {
+  shape: text
+  near: top-center
+  style.font-size: 18
+  style.bold: true
+}
+
+steps: {
+  1: {
+    note: "① CLOSED — requests forward normally"
+    (cb -> payment)[0].style.animated: true
+  }
+  2: {
+    note: "② payment times out — 6 of 10 calls fail"
+    payment: "Payment service\n⚠ timeouts" {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+    }
+    payment -> cb: "timeout ✖" {
+      style.stroke: "#E74C3C"
+      style.stroke-dash: 5
+    }
+  }
+  3: {
+    note: "③ failure rate 60% > 50% — breaker trips OPEN"
+    cb: "Breaker\nOPEN ✖" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+    }
+    (cb -> payment)[0]: "blocked" {
+      style.stroke: "#E74C3C"
+      style.opacity: 0.3
+    }
+    cb -> app: "503 in 1 ms" {
+      style.stroke: "#E74C3C"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+  4: {
+    note: "④ 30 s cooldown — HALF_OPEN sends one probe"
+    cb: "Breaker\nHALF_OPEN" {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+    }
+    (cb -> app)[0].style.opacity: 0.2
+    (cb -> payment)[0]: "single probe" {
+      style.stroke: "#D35400"
+      style.stroke-dash: 5
+      style.opacity: 1
+      style.animated: true
+    }
+  }
+  5: {
+    note: "⑤ probe returns 200 — breaker closes, traffic resumes"
+    cb: "Breaker\nCLOSED ✓" {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+    }
+    payment: "Payment service\n✓ recovered" {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+    }
+    (payment -> cb)[0].style.opacity: 0.2
+    (cb -> payment)[0]: "forward" {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.opacity: 1
+      style.animated: true
+    }
+  }
+}

@@ -1,0 +1,91 @@
+# CAP Theorem — Consistency, Availability, Partition Tolerance
+# d2 --sketch --layout elk overview.d2 ../../svg/4.1_cap_theorem/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+cap_triangle: CAP Trade-offs {
+  style.fill: "#F1EEE8"
+  style.stroke: "#AEB6BF"
+
+  consistency: C — Consistency {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  availability: A — Availability {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  partition: P — Partition Tolerance {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  ca: CA Systems\n(not partition tolerant) {
+    style.fill: "#5D6D7E"
+    style.stroke: "#808B96"
+    style.font-color: "#FFFFFF"
+  }
+
+  cp: CP Systems\n(sacrifice availability) {
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  ap: AP Systems\n(sacrifice consistency) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  consistency -> ca
+  availability -> ca
+  consistency -> cp
+  partition -> cp
+  availability -> ap
+  partition -> ap
+}
+
+note: Network partitions ALWAYS happen\nin distributed systems.\nP is mandatory → choose C or A. {
+  style.fill: "#F1EEE8"
+  style.stroke: "#F39C12"
+}
+
+scenarios: {
+  network_partition: {
+    cap_triangle.partition: P — Partition Tolerance\n⚠ PARTITION OCCURRING {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+      style.stroke-width: 3
+    }
+    cap_triangle.cp: CP — refuse requests\n(503 during partition) {
+      style.fill: "#5D6D7E"
+      style.stroke: "#424949"
+      style.font-color: "#FFFFFF"
+      style.stroke-width: 3
+    }
+    cap_triangle.ap: AP — return stale data\n(accept writes, reconcile later) {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+      style.stroke-width: 3
+    }
+  }
+}

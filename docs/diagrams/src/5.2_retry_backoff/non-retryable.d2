@@ -1,0 +1,37 @@
+# Retry and backoff — non-retryable errors
+# One idea: 4xx means the request is wrong; retrying cannot fix it.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+svc: "Payment service" {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+stop: "Do not retry\nsurface error" {
+  style.fill: "#E74C3C"
+  style.stroke: "#C0392B"
+  style.font-color: "#FFFFFF"
+}
+
+client -> svc: "1. POST /charge"
+svc -> client: "2. 400 bad request" {
+  style.stroke: "#E74C3C"
+}
+client -> stop: "3. fail fast" {
+  style.stroke: "#E74C3C"
+  style.stroke-width: 3
+}

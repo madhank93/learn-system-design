@@ -1,0 +1,55 @@
+# Indexing — Index Types and Trade-offs
+# d2 --sketch --layout elk index-types.d2 ../../svg/7.3_indexing/index-types.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+index_types: Index Types {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  btree_idx: B-Tree Index\n(range + equality) {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  hash_idx: Hash Index\n(equality only) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  ft_idx: Full-Text Index\n(token search) {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  composite: Composite\n(user_id, created_at) {
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+note: ⚠ Composite (user_id, created_at)\nunused for WHERE created_at only\n(leftmost-prefix rule) {
+  style.fill: "#E74C3C"
+  style.stroke: "#C0392B"
+  style.font-color: "#FFFFFF"
+}
+
+index_types.composite -> note: gotcha {
+  style.stroke: "#C0392B"
+  style.stroke-dash: 5
+}

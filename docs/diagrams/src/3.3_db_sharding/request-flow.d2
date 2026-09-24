@@ -1,0 +1,114 @@
+# DB Sharding — Query Routing and Scatter-Gather
+# d2 --sketch --layout elk request-flow.d2 ../../svg/3.3_db_sharding/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+app: App Server {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+router: Shard Router {
+  shape: hexagon
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+shard1: Shard 1\n(user_id 25M-49M) {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+shard0: Shard 0 {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+shard2: Shard 2 {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+shard3: Shard 3 {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+merge: Merge + Sort Results {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+app -> router: SELECT * FROM orders\nWHERE user_id=32000000
+router -> shard1: hash(32M)%4=1\n→ route here only {
+  style.stroke: "#27AE60"
+  style.stroke-width: 3
+  style.animated: true
+}
+shard1 -> app: 47 rows — 8ms (single shard)
+
+app -> router: SELECT * FROM orders\nWHERE created_at > now()-24h
+router -> shard0: fan-out {
+  style.stroke: "#E67E22"
+  style.stroke-width: 2
+}
+router -> shard1: fan-out {
+  style.stroke: "#E67E22"
+  style.stroke-width: 2
+}
+router -> shard2: fan-out {
+  style.stroke: "#E67E22"
+  style.stroke-width: 2
+}
+router -> shard3: fan-out {
+  style.stroke: "#E67E22"
+  style.stroke-width: 2
+}
+shard0 -> merge: partial results
+shard1 -> merge: partial results
+shard2 -> merge: partial results
+shard3 -> merge: partial results
+merge -> app: merged + sorted — 40ms
+
+scenarios: {
+  resharding: {
+    shard0: Shard 0\n(migrating 25%) {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    shard4: New Shard 4 {
+      shape: cylinder
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+    shard0 -> shard4: data migration {
+      style.stroke: "#3498DB"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+  }
+}

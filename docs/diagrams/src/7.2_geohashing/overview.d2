@@ -1,0 +1,94 @@
+# Geohashing — Grid and Proximity Search
+# d2 --sketch --layout elk overview.d2 ../../svg/7.2_geohashing/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+precision: Geohash Precision Levels {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  p1: Length 1 → ±2500km\n(32 global cells) {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  p4: Length 4 → ±78km {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  p6: Length 6 → ±1.2km {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  p8: Length 8 → ±38m {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  p12: Length 12 → ±37mm {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  p1 -> p4 -> p6 -> p8 -> p12: increasing precision
+}
+
+grid: Geohash Grid (precision 6) {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  cell_9q8yy: 9q8yy\n(San Francisco) {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  neighbors: 8 Neighbor Cells {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  boundary_issue: ⚠ Boundary Problem:\n2 points 10m apart\nbut different cells {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  cell_9q8yy -> neighbors: query all 9 cells
+  cell_9q8yy -> boundary_issue: edge case
+}
+
+scenarios: {
+  proximity_search: {
+    grid.cell_9q8yy: 9q8yy\nRider here {
+      style.stroke-width: 4
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+    grid.neighbors: 8 Neighbors\n→ drivers found ✓ {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

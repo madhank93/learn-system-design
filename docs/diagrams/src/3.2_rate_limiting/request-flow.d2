@@ -1,0 +1,83 @@
+# Rate Limiting — Distributed Redis Rate Limiter
+# d2 --sketch --layout elk request-flow.d2 ../../svg/3.2_rate_limiting/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: API Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+gateway: API Gateway {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+redis: Redis\n(rate limit store) {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+backend: Backend Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+allow: Allow Request {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+deny: 429 Too Many Requests\nRetry-After: 13 {
+  style.fill: "#E74C3C"
+  style.stroke: "#C0392B"
+  style.font-color: "#FFFFFF"
+}
+
+client -> gateway: GET /api/data
+gateway -> redis: INCR rate:client123:1717200000
+redis -> gateway: count=47
+gateway -> allow: 47 < 100 (limit) ✓
+allow -> backend: forward request
+backend -> client: 200 OK\nX-RateLimit-Remaining: 53\nX-RateLimit-Reset: 1717200060
+gateway -> deny: count > 100 {
+  style.stroke-dash: 5
+  style.stroke: "#E74C3C"
+}
+deny -> client: 429 {
+  style.stroke: "#E74C3C"
+  style.stroke-width: 2
+}
+
+scenarios: {
+  distributed_race: {
+    gateway: API Gateway 1\n+ Gateway 2 (race) {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    redis: Redis\n(Lua atomic script) {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

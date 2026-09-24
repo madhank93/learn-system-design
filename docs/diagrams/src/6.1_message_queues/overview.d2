@@ -1,0 +1,177 @@
+# Message Queues — Patterns and Kafka Architecture
+# d2 --sketch --layout elk overview.d2 ../../svg/6.1_message_queues/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+p2p: Point-to-Point {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  producer_p: Producer {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  queue_p: Queue {
+    shape: queue
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  c1: Consumer A {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  c2: Consumer B {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  producer_p -> queue_p
+  queue_p -> c1: msg 1, 3, 5...
+  queue_p -> c2: msg 2, 4, 6...
+}
+
+pubsub: Pub/Sub {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  publisher: Publisher {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  topic: Topic {
+    shape: queue
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  sub_a: Subscriber A {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  sub_b: Subscriber B {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  sub_c: Subscriber C {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  publisher -> topic
+  topic -> sub_a: copy
+  topic -> sub_b: copy
+  topic -> sub_c: copy
+}
+
+kafka_layout: Kafka Partitions {
+  style.fill: "#F1EEE8"
+  style.stroke: "#E67E22"
+
+  topic_k: Topic: orders {
+    shape: queue
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  p0: "Partition 0\n[0,1,2,3...]" {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  p1: "Partition 1\n[0,1,2,3...]" {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  p2: "Partition 2\n[0,1,2,3...]" {
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  cg: Consumer Group {
+    c_1: Consumer 1\n(reads P0) {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+    c_2: Consumer 2\n(reads P1) {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+    c_3: Consumer 3\n(reads P2) {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+  }
+
+  topic_k -> p0
+  topic_k -> p1
+  topic_k -> p2
+  p0 -> cg.c_1
+  p1 -> cg.c_2
+  p2 -> cg.c_3
+}
+
+dlq: Dead Letter Queue {
+  style.fill: "#F1EEE8"
+  style.stroke: "#8E44AD"
+
+  failed: Failed Consumer {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  dlq_q: DLQ {
+    shape: queue
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  failed -> dlq_q: after 3 retries {
+    style.stroke-dash: 5
+  }
+}
+
+scenarios: {
+  consumer_lag: {
+    kafka_layout.cg.c_1: Consumer 1\n⚠ lag: 50000 msgs {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

@@ -1,0 +1,83 @@
+# CQRS — Order Lifecycle with Event Sourcing
+# d2 --sketch --layout elk request-flow.d2 ../../svg/4.4_cqrs_event_sourcing/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+cmd_handler: Command Handler {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+event_store: Event Store {
+  shape: cylinder
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+kafka: Kafka Topic\n(order-events) {
+  shape: queue
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+inventory_svc: Inventory Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+read_model: Order Read Model\n(MongoDB) {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+client -> cmd_handler: "PlaceOrder (amount:99)"
+cmd_handler -> event_store: "APPEND OrderCreated (id:1, amount:99)"
+event_store -> kafka: publish {
+  style.stroke-dash: 5
+  style.animated: true
+}
+kafka -> inventory_svc: consume → reserve stock {
+  style.stroke-dash: 5
+  style.animated: true
+}
+kafka -> read_model: consume → upsert view {
+  style.stroke-dash: 5
+  style.animated: true
+}
+cmd_handler -> client: "201 Created (order_id:1)"
+
+client -> read_model: GET /orders/1
+read_model -> client: "(id:1, status:confirmed) — 1ms"
+
+scenarios: {
+  temporal_query: {
+    event_store: Event Store\n(time travel query) {
+      style.fill: "#5D6D7E"
+      style.stroke: "#424949"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

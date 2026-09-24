@@ -1,0 +1,102 @@
+# Circuit breaker — state machine
+# One idea: three states gate traffic to a flaky dependency.
+# Scenario tripped: breaker OPEN, all traffic fails fast to fallback.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+app: "App server" {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+breaker: "Circuit breaker" {
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+
+  closed: CLOSED {
+    shape: oval
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  open: OPEN {
+    shape: oval
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  half_open: HALF_OPEN {
+    shape: oval
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  closed -> open: "1. fail > 50%" {
+    style.stroke: "#E74C3C"
+    style.stroke-width: 2
+  }
+
+  open -> half_open: "2. 30 s cooldown" {
+    style.stroke-dash: 5
+    style.stroke: "#D35400"
+  }
+
+  half_open -> closed: "3. probe OK" {
+    style.stroke: "#27AE60"
+    style.stroke-width: 2
+  }
+
+  half_open -> open: "3. probe fails" {
+    style.stroke: "#E74C3C"
+  }
+}
+
+downstream: "Payment service" {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+fallback: "Fallback\n(cached)" {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+app -> breaker.closed: "request"
+breaker.closed -> downstream: "forward"
+breaker.open -> fallback: "fail fast" {
+  style.stroke-dash: 5
+  style.stroke: "#E74C3C"
+}
+
+scenarios: {
+  tripped: {
+    breaker.open: "OPEN ✖" {
+      style.stroke-width: 4
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    downstream: "Payment service\n✖ DOWN" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    (breaker.open -> fallback)[0]: "503 fast" {
+      style.stroke: "#D35400"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

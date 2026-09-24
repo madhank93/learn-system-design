@@ -1,0 +1,84 @@
+# WebSockets — Connection Lifecycle
+# d2 --sketch --layout elk request-flow.d2 ../../svg/2.5_websockets_sse/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Browser Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+ws_server: WS Server {
+  shape: hexagon
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+redis: Redis\n(room:42 channel) {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+other_ws: WS Server 2 {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+other_clients: Other Users {
+  shape: person
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+}
+
+client -> ws_server: 1. GET /chat HTTP/1.1\nUpgrade: websocket
+ws_server -> client: 2. HTTP 101 Switching Protocols
+client -> ws_server: 3. Text frame: "Hey"
+ws_server -> redis: 4. PUBLISH room:42 "Hey"
+redis -> ws_server: 5. echo to self subscribers {
+  style.stroke-dash: 5
+  style.animated: true
+}
+redis -> other_ws: 6. fan-out to other instances {
+  style.stroke-dash: 5
+  style.animated: true
+}
+other_ws -> other_clients: 7. push "Hey"
+other_clients -> other_ws: 8. read receipt ACK {
+  style.stroke-dash: 5
+}
+client -> ws_server: 9. Close frame
+ws_server -> redis: 10. UNSUBSCRIBE room:42 {
+  style.stroke-dash: 5
+}
+
+scenarios: {
+  server_restart: {
+    ws_server: WS Server\n⚠ RESTARTING {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    client -> ws_server: reconnect (1s backoff) {
+      style.stroke: "#E67E22"
+      style.stroke-width: 2
+      style.animated: true
+    }
+  }
+}
