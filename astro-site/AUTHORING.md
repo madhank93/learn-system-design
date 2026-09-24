@@ -16,7 +16,7 @@ This is the gold-standard recipe for a topic page. **Load Balancing (`src/conten
 10. `## Key concepts` — glossary table.
 11. `## When to use it` — two-column "use it when / avoid when" table.
 12. `## Trade-offs and failure modes` — concern / issue / mitigation table.
-13. `## This implementation` — how the runnable demo is built, with snippets **copied from the repo** (never illustrative code presented as the demo). Code that isn't in the repo goes in a `<details>` labelled as a sketch.
+13. `## This implementation` — how the runnable demo is built, with snippets **copied from the repo** (never illustrative code presented as the demo). Code that isn't in the repo goes in a `<details>` labelled as a sketch. Enforced by `src/content/docs/hld/snippets.test.ts`: every non-`text`/`bash` fence here must match lines in the `<BreakIt path>` dir.
 14. `## Further reading` — 3–5 authoritative links.
 15. `<details>` **Interview questions** — 5 Q&As with production baselines.
 16. `<TopicNav>` — prev/next learning-path footer.
@@ -81,6 +81,16 @@ const canvasRef = useCanvasSim({ /* … */ ariaLabel: '…describe the sim…' }
 <SimLegend items={[{ glyph: '●', color: '#…', label: '…' }, …]} />
 ```
 State must be encoded by **glyph + colour**, never colour alone. Default sliders to a legible steady state (not already saturated). Latencies that aren't literal must be labelled relative (e.g., `p50 (rel) ×`), not `ms`.
+
+### States to check before shipping
+
+Verify each in the browser, light and dark theme:
+
+- [ ] **Running** — default sliders give a legible steady state; counters and legend readable (≥4.5:1).
+- [ ] **Paused** — Pause freezes the canvas; sliders still redraw it; Play resumes without a jump.
+- [ ] **Reduced motion** — with `prefers-reduced-motion: reduce`, loads paused; Play still works.
+- [ ] **Offscreen** — scroll away and back: the loop stops (no rAF in the Performance panel) and resumes where it was.
+- [ ] **Narrow** — at 375 px wide, nothing clips and the canvas resizes.
 
 ## TopicNav wiring
 

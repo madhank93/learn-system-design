@@ -311,15 +311,20 @@ mode slow start exists to prevent.
 A Go HTTP server that identifies itself on every response, Dockerized, behind 4 Nginx instances — one per algorithm — on one Docker network. Each server prints its ID and region, making the distribution algorithm visible per request:
 
 ```go
-http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+return func(w http.ResponseWriter, r *http.Request) {
     sessionID := "anonymous"
     if cookie, err := r.Cookie("session_id"); err == nil {
         sessionID = cookie.Value
     }
+
+    mu.Lock()
     visits[sessionID]++
+    count := visits[sessionID]
+    mu.Unlock()
+
     fmt.Fprintf(w, "Server %s (%s) | Session: %s | Visit: %d\n",
-        id, region, sessionID, visits[sessionID])
-})
+        id, region, sessionID, count)
+}
 ```
 
 | Service | What it does |
