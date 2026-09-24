@@ -1,0 +1,39 @@
+---
+/**
+ * Prev / Next learning-path footer so the topic slice reads as a guided journey
+ * rather than disconnected pages. Static (zero client JS). Slugs are the
+ * Starlight content slugs, e.g. "hld/caching".
+ */
+interface Link {
+  label: string;
+  slug: string;
+}
+interface Props {
+  prev?: Link;
+  next?: Link;
+}
+const { prev, next } = Astro.props;
+---
+
+<nav class="lsd-topicnav not-content" aria-label="Topic navigation">
+  {
+    prev ? (
+      <a class="lsd-topicnav-link lsd-prev" href={`/${prev.slug}/`}>
+        <span class="lsd-topicnav-dir">← Previous</span>
+        <strong>{prev.label}</strong>
+      </a>
+    ) : (
+      <span />
+    )
+  }
+  {
+    next ? (
+      <a class="lsd-topicnav-link lsd-next" href={`/${next.slug}/`}>
+        <span class="lsd-topicnav-dir">Next →</span>
+        <strong>{next.label}</strong>
+      </a>
+    ) : (
+      <span />
+    )
+  }
+</nav>

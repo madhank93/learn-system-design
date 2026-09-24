@@ -1,0 +1,29 @@
+{
+  "name": "learn-system-design-astro",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@astrojs/react": "^4.2.0",
+    "@astrojs/starlight": "^0.32.0",
+    "@xyflow/react": "^12.4.0",
+    "astro": "^5.4.0",
+    "mermaid": "^11.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "playwright": "^1.61.0",
+    "rehype-mermaid": "^3.0.0",
+    "vitest": "^4.1.9"
+  }
+}
