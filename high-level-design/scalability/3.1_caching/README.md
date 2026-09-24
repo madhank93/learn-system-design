@@ -365,8 +365,8 @@ high-level-design/scalability/3.1_caching/
 │   └── main.go               # Go backend — simulated slow DB endpoint
 ├── nginx/
 │   ├── no_cache.conf         # Baseline — no caching
-│   ├── ttl_cache.conf        # proxy_cache with 30s TTL
-│   └── stale_revalidate.conf # stale-while-revalidate pattern
+│   ├── proxy_cache.conf      # proxy_cache with 30s TTL
+│   └── stale.conf            # stale-while-revalidate, 10s TTL
 ├── docker-compose.yml
 └── test.sh                   # curl test suite measuring latency with/without cache
 ```

@@ -332,11 +332,11 @@ high-level-design/scalability/3.2_rate_limiting/
 ├── server/
 │   └── main.go               # Go backend logging request identity
 ├── nginx/
-│   ├── per_ip.conf           # 10 req/s per IP, burst=5
-│   ├── per_api_key.conf      # limit_req_zone by $http_x_api_key
-│   └── burst_nodelay.conf    # burst=20 nodelay — instant burst, then throttle
+│   ├── per_ip.conf           # 5 req/s per IP, no burst
+│   ├── per_key.conf          # 10 req/s per $http_x_api_key, no burst
+│   └── burst.conf            # 2 req/s, burst=10 nodelay — instant burst, then throttle
 ├── docker-compose.yml
-└── test.sh                   # curl test suite with parallel requests
+└── test.sh                   # curl test suite with rapid sequential requests
 ```
 
 Run it:
