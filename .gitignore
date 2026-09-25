@@ -1,0 +1,30 @@
+website/
+node_modules/
+# Maelstrom binary (downloaded separately)
+high-level-design/distributed-challenges/maelstrom/maelstrom
+# Compiled challenge binaries (built by just dc-build-all)
+high-level-design/distributed-challenges/c[0-9]*/c[0-9]*
+website/static/diagrams/
+# syslings learner work dirs (seeded from exercise templates at runtime)
+syslings/work/
+# Compiled topic server binaries (go build artifacts)
+**/server/server
+# Astro build output and cache
+astro-site/dist/
+astro-site/.astro/
+# Claude Code machine-local state
+.claude/worktrees/
+.claude/settings.local.json
+# Compiled Go binaries named after their service (go build output)
+high-level-design/algorithms/7.2_geohashing/server/geohash-server
+high-level-design/algorithms/7.3_indexing/server/indexing-server
+high-level-design/basics/1.4_latency_and_throughput/latency-throughput
+high-level-design/data-and-consistency/4.5_leader_election/node/leader-election-node
+high-level-design/real-world-designs/SD04_realtime_chat/api/realtime-chat
+high-level-design/real-world-designs/SD05_video_streaming/api/video-streaming
+high-level-design/resilience/5.3_distributed_locking/worker/c1-echo
+high-level-design/scalability/3.1_caching/server/cache-server
+high-level-design/scalability/3.2_rate_limiting/server/rl-server
+high-level-design/scalability/3.4_db_replication/primary/db-primary
+high-level-design/security/8.1_oauth_jwt/auth-server/auth-server
+high-level-design/security/8.1_oauth_jwt/resource-server/resource-server

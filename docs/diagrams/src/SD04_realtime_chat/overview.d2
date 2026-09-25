@@ -1,0 +1,101 @@
+# Realtime Chat — Architecture
+# d2 --sketch --layout elk overview.d2 ../../svg/SD04_realtime_chat/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+user_a: User A {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+user_b: User B {
+  shape: person
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+}
+
+ws_layer: WebSocket Layer {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  ws1: WS Server 1 {
+    shape: hexagon
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  ws2: WS Server 2 {
+    shape: hexagon
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+kafka: Kafka (messages) {
+  shape: queue
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+msg_svc: Message Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+cassandra: Cassandra {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+notif: Push Notifications {
+  style.fill: "#5D6D7E"
+  style.stroke: "#808B96"
+  style.font-color: "#FFFFFF"
+}
+
+user_a -> ws_layer.ws1: WebSocket
+ws_layer.ws1 -> msg_svc: forward message
+msg_svc -> cassandra: persist
+msg_svc -> kafka: publish {
+  style.stroke-dash: 5
+  style.animated: true
+}
+kafka -> ws_layer.ws2: fan-out {
+  style.stroke-dash: 5
+  style.animated: true
+}
+ws_layer.ws2 -> user_b: push message
+
+scenarios: {
+  offline_delivery: {
+    ws_layer.ws2: WS2 — User B offline {
+      style.fill: "#5D6D7E"
+      style.stroke: "#808B96"
+      style.font-color: "#FFFFFF"
+    }
+    kafka -> notif: offline push {
+      style.stroke: "#AEB6BF"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+    notif -> user_b: APNs/FCM push
+  }
+}

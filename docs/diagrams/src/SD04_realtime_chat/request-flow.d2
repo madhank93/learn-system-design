@@ -1,0 +1,91 @@
+# Realtime Chat — Send Message Flow
+# d2 --sketch --layout elk request-flow.d2 ../../svg/SD04_realtime_chat/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+user_a: User A {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+ws_server1: WS Server 1 {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+msg_svc: Message Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+cassandra: Cassandra {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+kafka: "Kafka\n(channel: general)" {
+  shape: queue
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+ws_server2: WS Server 2 {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+user_b: User B {
+  shape: person
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+}
+
+user_a -> ws_server1: "WS frame: Hey → general"
+ws_server1 -> msg_svc: forward message
+msg_svc -> msg_svc: assign msg_id (Snowflake)
+msg_svc -> cassandra: INSERT message
+msg_svc -> kafka: "PUBLISH msg M123" {
+  style.stroke-dash: 5
+  style.animated: true
+}
+kafka -> ws_server2: fan-out {
+  style.stroke-dash: 5
+  style.animated: true
+}
+ws_server2 -> user_b: push "Hey"
+user_b -> ws_server2: ACK receipt
+ws_server2 -> msg_svc: read receipt: msg_id=M123
+
+scenarios: {
+  typing_indicator: {
+    user_a -> ws_server1: typing event {
+      style.stroke: "#E67E22"
+      style.stroke-dash: 5
+    }
+    ws_server1 -> ws_server2: "A is typing (3s)" {
+      style.stroke: "#E67E22"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+  }
+}

@@ -1,0 +1,58 @@
+---
+title: Learn System Design
+description: System design concepts you can read, simulate in the browser, then break and fix for real against a live Docker stack.
+template: splash
+hero:
+  title: Learn System Design by Breaking Things
+  tagline: Every topic follows one loop — see the idea, play with a live simulation, then break the real stack in Docker and fix it until the checks go green.
+  actions:
+    - text: Start with Load Balancing
+      link: /hld/load-balancing/
+      icon: right-arrow
+      variant: primary
+    - text: Browse the code on GitHub
+      link: https://github.com/madhank93/learn-system-design
+      icon: github
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## The learning loop
+
+**See** the concept → **Play** with a live simulation in your browser → **Break it**: `just syslings` (or `go run ./syslings` if you don't have [just](https://github.com/casey/just)) boots the real Go + Nginx stack in Docker with a deliberately broken config. Fix the file, save, and the check re-runs against live traffic until it goes green → **Go deeper** into the mechanics and trade-offs.
+
+## The path
+
+<CardGrid>
+  <Card title="1 · Load Balancing" icon="setting">
+    Round robin, least connections, consistent hashing — then debug seven
+    deliberately broken balancers against live traffic.
+    [See → Play → Break it · with exercises](/hld/load-balancing/)
+  </Card>
+  <Card title="2 · Caching" icon="seti:db">
+    Hit ratios, TTLs, and the stampede that takes down your database — then
+    fix two broken Nginx caches against live traffic. [See → Play → Break it · with exercises](/hld/caching/)
+  </Card>
+  <Card title="3 · Rate Limiting" icon="warning">
+    Token buckets and sliding windows — what actually happens at request 101.
+    [See → Play → Break it](/hld/rate-limiting/)
+  </Card>
+  <Card title="4 · Circuit Breaker" icon="error">
+    Closed, open, half-open: failing fast so one dead dependency doesn't
+    cascade. [See → Play → Break it](/hld/circuit-breaker/)
+  </Card>
+  <Card title="5 · DB Replication" icon="random">
+    Primary/replica, replication lag, and what your users see during failover.
+    [See → Play → Break it](/hld/db-replication/)
+  </Card>
+  <Card title="6 · Consistent Hashing" icon="puzzle">
+    The ring, virtual nodes, and why adding a server doesn't remap the world.
+    [See → Play → Break it](/hld/consistent-hashing/)
+  </Card>
+</CardGrid>
+
+## Beyond the six
+
+The [GitHub repo](https://github.com/madhank93/learn-system-design) has 25+ more
+runnable topics — sharding, CQRS, leader election, gossip protocols, real-world
+designs — all migrating to this site with sims and labs. Star it to follow along.

@@ -1,0 +1,85 @@
+# SQL vs NoSQL — Choosing the Right Database
+# d2 --sketch --layout elk request-flow.d2 ../../svg/4.2_sql_vs_nosql/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+req: New Requirement:\nStore user profiles with\nflexible attributes {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+q1: Need ACID\ntransactions? {
+  shape: diamond
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+q2: Need complex\nJOINs? {
+  shape: diamond
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+q3: Fixed schema? {
+  shape: diamond
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+q4: Time-series\nor wide rows? {
+  shape: diamond
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+use_sql: Use SQL\n(PostgreSQL) {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+use_document: Use Document DB\n(MongoDB) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+use_cassandra: Use Cassandra {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+req -> q1
+q1 -> use_sql: Yes
+q1 -> q2: No
+q2 -> use_sql: Yes
+q2 -> q3: No
+q3 -> use_sql: Yes (known schema)
+q3 -> q4: No (flexible)
+q4 -> use_cassandra: Yes
+q4 -> use_document: No
+
+scenarios: {
+  acid_payment: {
+    use_sql: Use SQL\n(bank transfer) {
+      style.stroke-width: 4
+    }
+  }
+}

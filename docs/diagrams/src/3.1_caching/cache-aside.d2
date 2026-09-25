@@ -1,0 +1,64 @@
+# Caching — Cache-aside pattern
+# One idea: app checks cache first, fills it from DB on miss.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+app: App {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+  style.bold: true
+}
+
+redis: Redis {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+db: PostgreSQL {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+client -> app: "1. GET"
+app -> redis: "2. miss"
+app -> db: "3. read" {
+  style.stroke-dash: 5
+}
+app -> redis: "4. SET" {
+  style.stroke: "#27AE60"
+}
+
+scenarios: {
+  stampede: {
+    redis: Redis — expired ✗ {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+    }
+    db: PostgreSQL ⚠ overloaded {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+    }
+    app -> db: "100 concurrent reads" {
+      style.stroke: "#E74C3C"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

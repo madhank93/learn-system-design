@@ -1,0 +1,92 @@
+# API Gateway — Architecture and Cross-Cutting Concerns
+# d2 --sketch --layout elk overview.d2 ../../svg/2.4_api_gateway/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+gateway: API Gateway\nrate limit · auth\nrouting · transform {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+services: Backend Services {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  user_svc: User Service\n(:8001) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  order_svc: Order Service\n(:8002) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  payment_svc: Payment Service\n(:8003) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+}
+
+client -> gateway: HTTPS request
+gateway -> services.user_svc: /users/*
+gateway -> services.order_svc: /orders/*
+gateway -> services.payment_svc: /payments/*
+
+scenarios: {
+  auth_failure: {
+    gateway: API Gateway\n✗ 401 Unauthorized {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    gateway -> services.user_svc: {
+      style.opacity: 0.1
+    }
+    gateway -> services.order_svc: {
+      style.opacity: 0.1
+    }
+    gateway -> services.payment_svc: {
+      style.opacity: 0.1
+    }
+    gateway -> client: 401 {
+      style.stroke: "#E74C3C"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+
+  rate_limited: {
+    gateway: API Gateway\n⚠ 429 Rate Limited {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    client -> gateway: 100 req/s {
+      style.stroke: "#E74C3C"
+      style.stroke-width: 3
+    }
+  }
+}

@@ -1,0 +1,28 @@
+---
+/**
+ * "Run the code" callout linking a topic to its runnable Go + Docker
+ * implementation in the GitHub repo, with the justfile commands to run & test it.
+ * `path` = dir under `high-level-design/` (for the source link);
+ * `recipe` = the justfile recipe base, e.g. "load-balancing" → just load-balancing-up.
+ */
+interface Props {
+  path: string;
+  recipe: string;
+}
+const REPO = 'https://github.com/madhank93/learn-system-design';
+const { path, recipe } = Astro.props;
+const href = `${REPO}/tree/main/high-level-design/${path}`;
+---
+
+<div class="lsd-runcode not-content">
+  <div class="lsd-runcode-head">
+    <span class="lsd-runcode-badge">⚙ Runnable code</span>
+    <a class="lsd-runcode-link" href={href} target="_blank" rel="noopener noreferrer">
+      high-level-design/{path} →
+    </a>
+  </div>
+  <pre class="lsd-runcode-cmd"><code>cd high-level-design
+just {recipe}-up      # build & start the services
+just {recipe}-test    # run the tests
+just {recipe}-down    # tear it all down</code></pre>
+</div>

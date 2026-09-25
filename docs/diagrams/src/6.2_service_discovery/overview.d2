@@ -1,0 +1,115 @@
+# Service Discovery — Client-Side vs Server-Side
+# d2 --sketch --layout elk overview.d2 ../../svg/6.2_service_discovery/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client_side: Client-Side Discovery {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  registry_c: Registry\n(Consul) {
+    shape: cylinder
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  svc_a: Service A\n(caller) {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  svc_b1: Service B\ninst 1 {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  svc_b2: Service B\ninst 2 {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  svc_b1 -> registry_c: register {
+    style.stroke-dash: 5
+  }
+  svc_b2 -> registry_c: register {
+    style.stroke-dash: 5
+  }
+  svc_a -> registry_c: lookup B
+  registry_c -> svc_a: "[B instances]"
+  svc_a -> svc_b1: direct call
+}
+
+server_side: Server-Side Discovery {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  lb: LB / Gateway {
+    shape: hexagon
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  registry_s: Registry {
+    shape: cylinder
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  client_s: Client {
+    shape: person
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+  }
+
+  svc_s1: Service B\ninst 1 {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  svc_s2: Service B\ninst 2 {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  client_s -> lb: call /api/B
+  lb -> registry_s: lookup
+  registry_s -> lb: "[instances]"
+  lb -> svc_s1: route
+}
+
+scenarios: {
+  instance_down: {
+    client_side.svc_b1: Service B\ninstance 1\n⚠ DOWN {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    client_side.registry_c: Service Registry\n(deregistered inst 1) {
+      style.stroke-width: 3
+    }
+    client_side.svc_a -> client_side.svc_b2: routes to inst 2 only {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

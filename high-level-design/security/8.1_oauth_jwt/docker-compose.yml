@@ -1,0 +1,16 @@
+services:
+  auth-server:
+    build: ./auth-server
+    environment:
+      - JWT_SECRET=super-secret-key
+    ports:
+      - "8080:8080"
+
+  resource-server:
+    build: ./resource-server
+    environment:
+      - AUTH_SERVER_URL=http://auth-server:8080
+    ports:
+      - "8081:8081"
+    depends_on:
+      - auth-server

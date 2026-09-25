@@ -1,0 +1,82 @@
+# Load balancer — health-check state machine (animated steps)
+# Fixed states; each step advances one transition.
+# Frames: ① healthy → ② probe fires → ③ failures mount → ④ unhealthy → ⑤ recovered
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+healthy: HEALTHY {
+  shape: oval
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+checking: CHECKING {
+  shape: diamond
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+unhealthy: UNHEALTHY {
+  shape: oval
+  style.fill: "#E74C3C"
+  style.stroke: "#C0392B"
+  style.font-color: "#FFFFFF"
+}
+
+healthy -> checking: "1. probe" {
+  style.stroke: "#5D6D7E"
+}
+checking -> healthy: "2. pass" {
+  style.stroke: "#27AE60"
+}
+checking -> unhealthy: "3. fail ×3" {
+  style.stroke: "#E74C3C"
+}
+unhealthy -> checking: "4. retry probe" {
+  style.stroke: "#5D6D7E"
+  style.stroke-dash: 5
+}
+
+note: "probe cycle — 5 steps" {
+  shape: text
+  near: top-center
+  style.font-size: 18
+  style.bold: true
+}
+
+steps: {
+  1: {
+    note: "① server healthy — receiving traffic"
+    healthy.style.stroke-width: 4
+  }
+  2: {
+    note: "② probe fires every 10 s"
+    (healthy -> checking)[0].style.animated: true
+    (healthy -> checking)[0].style.stroke-width: 3
+  }
+  3: {
+    note: "③ third consecutive probe fails"
+    (checking -> unhealthy)[0].style.animated: true
+    (checking -> unhealthy)[0].style.stroke-width: 3
+    unhealthy.style.stroke-width: 4
+  }
+  4: {
+    note: "④ removed from rotation — retry probes continue"
+    (unhealthy -> checking)[0].style.animated: true
+    (unhealthy -> checking)[0].style.stroke-width: 3
+  }
+  5: {
+    note: "⑤ probe passes — back in rotation"
+    (checking -> healthy)[0].style.animated: true
+    (checking -> healthy)[0].style.stroke-width: 3
+    healthy.style.stroke-width: 4
+  }
+}

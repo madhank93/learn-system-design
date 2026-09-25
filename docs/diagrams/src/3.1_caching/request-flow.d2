@@ -1,0 +1,80 @@
+# Caching — Cache-aside, animated (steps: one change per frame)
+# GIF frames: ① miss ② DB read ③ populate ④ second request hits
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+note: "① GET user:42 — cache MISS" {
+  shape: text
+  style.font-color: "#424949"
+  style.bold: true
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+app: App {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+redis: Redis {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+db: PostgreSQL {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+client -> app: GET
+app -> redis: "miss" {
+  style.stroke: "#E74C3C"
+}
+
+steps: {
+  1: {}
+  2: {
+    note: "② read from PostgreSQL — ~10ms"
+    app -> db: read {
+      style.stroke: "#D35400"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+  3: {
+    note: "③ SET user:42 EX 300 — cache filled"
+    redis: Redis ✓ {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+    }
+    app -> redis: SET {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+  4: {
+    note: "④ next GET — HIT, ~1ms"
+    db.style.opacity: 0.3
+    redis -> app: "HIT" {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

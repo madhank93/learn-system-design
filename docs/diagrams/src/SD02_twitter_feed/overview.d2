@@ -1,0 +1,98 @@
+# Twitter feed — fanout architecture
+# One idea: regular tweets fan out at write; celebrity tweets merge at read.
+# Scenario celebrity_tweet: fanout skipped, feed service merges at read.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+users: Users {
+  style.fill: "#F1EEE8"
+  style.stroke: "#D5D0C8"
+
+  celebrity: "Celebrity\n10M followers" {
+    shape: person
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+  }
+
+  regular: "Regular\n500 followers" {
+    shape: person
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+  }
+}
+
+tweet_svc: "Tweet service" {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+  style.bold: true
+}
+
+store: "Tweet store" {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+fanout: "Fanout service" {
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+timelines: "Timeline cache" {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+feed_svc: "Feed service" {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+users.regular -> tweet_svc: "1. post"
+tweet_svc -> store: "2. persist"
+tweet_svc -> fanout: "3. fan out" {
+  style.stroke-dash: 5
+  style.stroke: "#D35400"
+}
+fanout -> timelines: "4. push" {
+  style.stroke-dash: 5
+  style.stroke: "#D35400"
+}
+feed_svc -> timelines: "5. read"
+feed_svc -> store: "6. hydrate"
+
+scenarios: {
+  celebrity_tweet: {
+    fanout: "Fanout service\nSKIP — celebrity" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    feed_svc: "Feed service\nmerge at read" {
+      style.stroke-width: 3
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+    (users.celebrity -> tweet_svc): "1. post" {
+      style.stroke: "#E74C3C"
+    }
+    (feed_svc -> store)[0]: "6. merge celeb" {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

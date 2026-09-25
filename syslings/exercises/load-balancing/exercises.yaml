@@ -1,0 +1,75 @@
+# Ordered load-balancing exercises. Learners edit files in syslings/work/,
+# mounted live into the nginx containers — save, and the check reruns.
+- id: 01_all_aboard
+  title: "All aboard — meet the stack"
+  desc: "Meet the four balancers and the ports they answer on. Passes on arrival."
+  type: scenario
+  check: 01_all_aboard/check.sh
+  hints:
+    - "Nothing to fix yet — this one passes as soon as the stack answers. Read the ✓ lines: they're your map of the four load balancers."
+
+- id: 02_round_robin
+  title: "Round robin plays favorites"
+  desc: "One server hogs every request — restore the fair rotation."
+  type: fix
+  file: round_robin.conf
+  check: 02_round_robin/check.sh
+  hints:
+    - "curl localhost:8081 a few times. Every response comes from Server 1. Why would round robin ever favor a server?"
+    - "Look at the upstream block in work/load-balancing/round_robin.conf — one server carries a parameter the others don't."
+    - "Remove `weight=100` from server1. Equal weights = a fair rotation."
+
+- id: 03_least_conn
+  title: "least_conn.conf is lying"
+  desc: "The \"least connections\" balancer is not counting connections. Make it."
+  type: fix
+  file: least_conn.conf
+  check: 03_least_conn/check.sh
+  hints:
+    - "The check parks two 6-second requests, then fires quick ones. A least-connections balancer should route the quick ones to the idle server — this one spreads them evenly. What's it actually doing?"
+    - "With no directive, an nginx upstream defaults to round robin. One directive tells it to count active connections."
+    - "Add `least_conn;` as the first line inside the upstream block."
+
+- id: 04_sticky_or_not
+  title: "Sticky sessions that aren't"
+  desc: "Sessions are pinned to the wrong key entirely. Hash what identifies a session."
+  type: fix
+  file: consistent_hashing.conf
+  check: 04_sticky_or_not/check.sh
+  hints:
+    - "Alice looks pinned… but so does everyone else, to the same server. What key is the hash actually using?"
+    - "`$remote_addr` is the client IP. Every local curl has the same IP — so every session lands together, and a real client changing networks would lose its session."
+    - "Hash the session cookie instead: `hash $cookie_session_id consistent;`"
+
+- id: 05_lost_in_geo
+  title: "Lost in geo-translation"
+  desc: "Header-less traffic gets dumped into one region's pool. Fix the fallback."
+  type: fix
+  file: geo_env_based.conf
+  check: 05_lost_in_geo/check.sh
+  hints:
+    - "Requests with X-Region: us or eu route fine. But a request with no region header — or one you've never heard of — should hit the global pool. Where does it land instead?"
+    - "Check the `map` block's `default` line in work/load-balancing/geo_env_based.conf."
+    - "Point default at `global_backend;` — unknown traffic belongs on the catch-all pool, not in one region."
+
+- id: 06_black_hole
+  title: "The black-hole timeout"
+  desc: "A decommissioned VM still in the pool black-holes requests for 60s. Fail fast."
+  type: fix
+  file: round_robin.conf
+  setup: 06_black_hole/setup.sh
+  check: 06_black_hole/check.sh
+  hints:
+    - "A decommissioned VM is still listed in the upstream pool, and its IP black-holes connections. nginx retries dead upstreams — so why do clients still hang?"
+    - "How long does nginx wait for a connection before giving up? Check `proxy_connect_timeout` in work/load-balancing/round_robin.conf — 60s means every request that lands on the dead entry waits a minute before failing over."
+    - "Set `proxy_connect_timeout 2s;` — fail fast, retry the next server, and clients never notice. (Removing the dead entry also passes, but the timeout protects you from the next one too. This repo hit this exact bug for real.)"
+
+- id: 07_full_recovery
+  title: "Bring server2 home"
+  desc: "server2 is down. Bring it home and feel fail_timeout's 10s memory."
+  type: scenario
+  setup: 07_full_recovery/setup.sh
+  check: 07_full_recovery/check.sh
+  hints:
+    - "server2 is stopped. Bring it back: cd high-level-design/networking-and-edge/2.1_load_balancer && docker compose start server2"
+    - "Started it but the check still fails? nginx passive health checks hold a failed server out of rotation for ~10s (`fail_timeout`). Wait, then save any work file (or press r) to re-check."

@@ -31,6 +31,7 @@ describe("Parking floor test cases", () => {
       ParkingSpotType.Motorcycle,
       ParkingSpotType.Large,
       ParkingSpotType.ElectricCar,
+      ParkingSpotType.Disabled,
     ];
     expect(spotTypesOfFirstFloor).toEqual(expectedSpotTypes);
     expect(spotTypesOfSecondFloor).toEqual(expectedSpotTypes);
@@ -46,7 +47,7 @@ describe("Parking floor test cases", () => {
       ...secondFloor.getListOfParkingSpots().values(),
     ].flatMap((spot) => spot.length);
 
-    const expectedSpotTypesSize = [0, 0, 0, 0];
+    const expectedSpotTypesSize = [0, 0, 0, 0, 0];
 
     expect(spotTypesSizeOfFirstFloor).toEqual(expectedSpotTypesSize);
     expect(spotTypesSizeOfSecondFloor).toEqual(expectedSpotTypesSize);

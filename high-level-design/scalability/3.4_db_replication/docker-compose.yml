@@ -1,0 +1,37 @@
+services:
+  primary:
+    build: ./primary
+    networks:
+      - replnet
+
+  replica-1:
+    build: ./replica
+    environment:
+      - REPLICA_ID=replica-1
+      - PRIMARY_ADDR=primary:8080
+    depends_on: [primary]
+    networks:
+      - replnet
+
+  replica-2:
+    build: ./replica
+    environment:
+      - REPLICA_ID=replica-2
+      - PRIMARY_ADDR=primary:8080
+    depends_on: [primary]
+    networks:
+      - replnet
+
+  nginx:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/router.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    depends_on: [primary, replica-1, replica-2]
+    networks:
+      - replnet
+
+networks:
+  replnet:
+    driver: bridge

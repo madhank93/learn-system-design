@@ -22,17 +22,16 @@ export class ParkingLot {
   }
 
   public vacateParkingSpot(parkingSpotID: string) {
-    for (let floor of this.parkingFloor) {
-      for (let spots of floor.getListOfParkingSpots().values()) {
-        const vacatedSpot = spots.find((spot) => {
-          if (spot.getParkingSpotID() === parkingSpotID) {
-            spot.vacateVehicleFromSpot();
-            return spot;
-          }
-        });
-        return vacatedSpot;
+    for (const floor of this.parkingFloor) {
+      for (const spots of floor.getListOfParkingSpots().values()) {
+        const spot = spots.find((s) => s.getParkingSpotID() === parkingSpotID);
+        if (spot) {
+          spot.vacateVehicleFromSpot();
+          return spot;
+        }
       }
     }
+    return undefined;
   }
 
   public getListOfParkingFloor() {

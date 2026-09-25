@@ -1,0 +1,44 @@
+services:
+  user-service:
+    build: ./user-service
+    networks:
+      - gwnet
+
+  product-service:
+    build: ./product-service
+    networks:
+      - gwnet
+
+  nginx-routing:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/routing.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8081:80"
+    depends_on: [user-service, product-service]
+    networks:
+      - gwnet
+
+  nginx-auth:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/auth.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8082:80"
+    depends_on: [user-service, product-service]
+    networks:
+      - gwnet
+
+  nginx-versioned:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/versioned.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8083:80"
+    depends_on: [user-service, product-service]
+    networks:
+      - gwnet
+
+networks:
+  gwnet:
+    driver: bridge

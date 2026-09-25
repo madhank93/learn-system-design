@@ -1,0 +1,326 @@
+/* Wider content column — the default 45rem leaves big gaps on wide screens and
+   cramps the interactive canvas sims. */
+:root {
+  --sl-content-width: 56rem;
+  --sl-sidebar-width: 15rem; /* tighten the left nav gutter (default 18.75rem) */
+}
+
+/* Proof-slice styling for interactive diagram islands */
+/* Sims and diagrams are dark panels in both themes: the canvas palette and the
+   mermaid theme are dark-only, so the card around them stays dark too. */
+:root[data-theme='light'] :is(.lsd-diagram, .lsd-figure) {
+  --sl-color-white: hsl(0, 0%, 100%);
+  --sl-color-gray-1: hsl(224, 20%, 94%);
+  --sl-color-gray-2: hsl(224, 6%, 77%);
+  --sl-color-gray-3: hsl(224, 6%, 56%);
+  --sl-color-gray-4: hsl(224, 7%, 36%);
+  --sl-color-gray-5: hsl(224, 10%, 23%);
+  --sl-color-gray-6: hsl(224, 14%, 16%);
+  --sl-color-black: hsl(224, 10%, 10%);
+  --sl-color-accent-low: hsl(224, 54%, 20%);
+  color: var(--sl-color-gray-2);
+}
+.lsd-diagram {
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  background: var(--sl-color-black);
+  padding: 0.75rem;
+  margin: 1.25rem 0;
+}
+.lsd-figure {
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  background: var(--sl-color-black);
+  padding: 0.75rem;
+  margin: 1.25rem 0;
+  text-align: center;
+}
+.lsd-figure svg { max-width: 100%; height: auto; }
+.lsd-figcaption {
+  font-size: 0.85rem;
+  color: var(--sl-color-gray-2);
+  margin-top: 0.5rem;
+  text-align: center;
+}
+.lsd-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.lsd-controls button,
+.lsd-seg button {
+  box-sizing: border-box;
+  margin: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  height: 36px;
+  padding: 0 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: 0.4rem;
+  border: 1px solid var(--sl-color-gray-4);
+  background: var(--sl-color-gray-6);
+  color: var(--sl-color-white);
+  cursor: pointer;
+}
+.lsd-controls > span { display: inline-flex; align-items: center; font-size: 0.85rem; }
+.lsd-controls button:hover,
+.lsd-seg button:hover { background: var(--sl-color-accent-low); }
+.lsd-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+.lsd-caption {
+  font-size: 0.85rem;
+  color: var(--sl-color-gray-2);
+  margin-top: 0.4rem;
+  min-height: 1.2em;
+}
+.lsd-stat {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  color: var(--sl-color-gray-2);
+}
+.lsd-stat strong { color: var(--sl-color-white); }
+
+/* shared interactive bits */
+.lsd-legend { display: flex; flex-direction: column; gap: 4px; }
+.lsd-legend-row { display: flex; align-items: center; gap: 6px; }
+.lsd-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
+.lsd-bar-track { height: 12px; background: var(--sl-color-gray-6); border-radius: 4px; flex: 1; overflow: hidden; min-width: 60px; }
+.lsd-bar-fill { height: 100%; border-radius: 4px; transition: width .25s ease; }
+.lsd-hint {
+  font-size: 0.8rem; color: var(--sl-color-gray-2);
+  background: var(--sl-color-gray-6); border-radius: 0.4rem;
+  padding: 0.4rem 0.6rem; margin-bottom: 0.5rem;
+}
+/* segmented control: collapsed borders so each button is an identical box,
+   matching standalone buttons exactly (no double-border height mismatch) */
+.lsd-seg { display: inline-flex; }
+.lsd-seg button { border-radius: 0; margin-left: -1px; }
+.lsd-seg button:first-child { border-top-left-radius: 0.4rem; border-bottom-left-radius: 0.4rem; margin-left: 0; }
+.lsd-seg button:last-child { border-top-right-radius: 0.4rem; border-bottom-right-radius: 0.4rem; }
+.lsd-seg button[aria-pressed='true'] {
+  background: var(--sl-color-accent);
+  color: #fff; /* --sl-color-white turns dark in light theme */
+  border-color: var(--sl-color-accent);
+  position: relative;
+  z-index: 1;
+}
+
+/* lift edge labels above the node layer so they're never clipped behind a box */
+.lsd-diagram .react-flow__edgelabel-renderer { z-index: 6; }
+.lsd-diagram .react-flow__node { z-index: 4; }
+
+/* labels on SystemDiagram parallel edges (rendered via EdgeLabelRenderer) */
+.lsd-edge-label {
+  position: absolute;
+  pointer-events: none;
+  font-size: 0.72rem;
+  line-height: 1.1;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  color: #e6e9ef;
+  background: #10131a;
+  border: 1px solid #3a3f4b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.3s;
+}
+
+/* --- canvas flow sims (LoadBalancerFlow / RateLimiterFlow) --- */
+.lsd-canvas {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  background: #0b0e14; /* dark sim stage in both site themes */
+  border: 1px solid var(--sl-color-gray-5);
+}
+.lsd-slider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.6rem 1rem;
+  margin-top: 0.7rem;
+}
+.lsd-slider { display: flex; flex-direction: column; gap: 4px; }
+.lsd-slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--sl-color-gray-2);
+}
+.lsd-slider-label strong { color: var(--sl-color-white); font-variant-numeric: tabular-nums; }
+.lsd-range { width: 100%; accent-color: #4f9df7; cursor: pointer; }
+
+.lsd-metric-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.8rem; }
+.lsd-metric {
+  flex: 1;
+  min-width: 72px;
+  background: var(--sl-color-gray-6);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+}
+.lsd-metric-label {
+  display: block;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--sl-color-gray-2);
+}
+.lsd-metric-value {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--sl-color-white);
+  font-variant-numeric: tabular-nums;
+}
+.lsd-metric-value.is-warn { color: #ff7b72; }
+
+.lsd-hist {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 54px;
+  margin-top: 0.9rem;
+  padding: 0 2px;
+}
+.lsd-hist-bar { flex: 1; min-height: 1px; border-radius: 1px 1px 0 0; background: #4f9df7; opacity: 0.85; }
+
+/* sim legend — state by glyph + colour (never colour alone) */
+.lsd-simlegend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+}
+.lsd-simlegend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  color: var(--sl-color-gray-2);
+}
+.lsd-simlegend-glyph { font-size: 0.9rem; line-height: 1; }
+
+/* "Run the code" callout */
+.lsd-runcode {
+  border: 1px solid var(--sl-color-gray-5);
+  border-left: 3px solid var(--sl-color-accent);
+  border-radius: 0.5rem;
+  background: var(--sl-color-gray-6);
+  padding: 0.75rem 0.9rem;
+  margin: 1.25rem 0;
+}
+.lsd-runcode-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.lsd-runcode-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--sl-color-accent-high);
+}
+.lsd-runcode-link {
+  font-family: var(--sl-font-mono, monospace);
+  font-size: 0.82rem;
+  color: var(--sl-color-white);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--sl-color-gray-4);
+}
+.lsd-runcode-link:hover { border-bottom-color: var(--sl-color-accent); color: var(--sl-color-accent-high); }
+.lsd-runcode-cmd {
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  background: var(--sl-color-black);
+  border-radius: 0.4rem;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.lsd-runcode-cmd code { background: none; color: var(--sl-color-gray-1); }
+
+/* "Break it" step: syslings exercise list + runnable stack */
+.lsd-breakit { margin: 1rem 0 1.5rem; }
+.lsd-breakit > p { margin: 0.75rem 0; }
+.lsd-breakit-list { margin: 1rem 0; padding-left: 1.4rem; }
+.lsd-breakit-list li { margin: 0.55rem 0; }
+.lsd-breakit-title { font-weight: 600; color: var(--sl-color-white); }
+.lsd-breakit-type {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--sl-color-gray-4);
+  border-radius: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--sl-color-gray-2);
+  vertical-align: 0.1em;
+}
+.lsd-breakit-type.is-fix { border-color: var(--sl-color-accent); color: var(--sl-color-accent-high); }
+.lsd-breakit-desc { display: block; color: var(--sl-color-gray-2); font-size: 0.92rem; }
+.lsd-breakit-foot { font-size: 0.9rem; color: var(--sl-color-gray-2); }
+
+/* prev/next learning-path footer */
+.lsd-topicnav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+.lsd-topicnav-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  max-width: 48%;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: var(--sl-color-white);
+  transition: border-color 0.2s, background 0.2s;
+}
+.lsd-topicnav-link:hover { border-color: var(--sl-color-accent); background: var(--sl-color-gray-6); }
+.lsd-topicnav-link.lsd-next { text-align: right; }
+.lsd-topicnav-dir { font-size: 0.75rem; color: var(--sl-color-gray-3); }
+.lsd-topicnav-link strong { color: var(--sl-color-accent-high); }
+
+/* visually hidden but available to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.lsd-hist-axis { position: absolute; right: 4px; top: -14px; font-size: 0.68rem; color: var(--sl-color-gray-3); }
+
+@keyframes lsd-pulse {
+  0% { r: 5; opacity: 1; }
+  100% { r: 16; opacity: 0; }
+}
+@keyframes lsd-flash {
+  0% { box-shadow: 0 0 0 0 var(--sl-color-accent); }
+  100% { box-shadow: 0 0 0 6px transparent; }
+}
+.lsd-card-flash { animation: lsd-flash .6s ease-out; }
+
+/* Starlight's hero reserves a 4fr image column even when no image is set. */
+@media (min-width: 50rem) {
+  main .hero:not(:has(> img, > .hero-html)) {
+    grid-template-columns: 1fr;
+  }
+}

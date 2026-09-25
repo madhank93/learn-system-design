@@ -1,0 +1,108 @@
+# Networking Fundamentals — HTTP Request Walk-Through
+# d2 --sketch --layout elk request-flow.d2 ../../svg/1.2_networking_fundamentals/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+browser: Browser {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+dns_cache: Local DNS Cache {
+  style.fill: "#F1EEE8"
+  style.stroke: "#F39C12"
+}
+
+resolver: Recursive Resolver\n(8.8.8.8) {
+  shape: cloud
+  style.fill: "#F1EEE8"
+  style.stroke: "#F39C12"
+}
+
+root_ns: Root Nameserver {
+  shape: cloud
+  style.fill: "#FDEBD0"
+  style.stroke: "#E67E22"
+}
+
+tld_ns: .com TLD Nameserver {
+  shape: cloud
+  style.fill: "#FDEBD0"
+  style.stroke: "#E67E22"
+}
+
+auth_ns: Authoritative NS {
+  shape: cloud
+  style.fill: "#FDEBD0"
+  style.stroke: "#E67E22"
+}
+
+tcp: TCP Handshake\n(SYN/SYN-ACK/ACK) {
+  style.fill: "#EAF2FF"
+  style.stroke: "#2471A3"
+}
+
+tls: TLS 1.3 Handshake {
+  style.fill: "#EAF2FF"
+  style.stroke: "#2471A3"
+}
+
+http: HTTP GET / {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+server: Web Server {
+  shape: hexagon
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+resp: HTTP 200 OK {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+browser -> dns_cache: resolve example.com
+dns_cache -> resolver: MISS {
+  style.stroke-dash: 5
+}
+resolver -> root_ns: query
+root_ns -> resolver: .com NS
+resolver -> tld_ns: query
+tld_ns -> resolver: example.com NS
+resolver -> auth_ns: query
+auth_ns -> resolver: 93.184.216.34
+resolver -> browser: IP address
+browser -> tcp
+tcp -> tls
+tls -> http
+http -> server
+server -> resp
+resp -> browser: render page
+
+scenarios: {
+  http2_multiplexing: {
+    http: HTTP/2 — 3 streams multiplexed {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+      style.stroke-width: 3
+    }
+  }
+}

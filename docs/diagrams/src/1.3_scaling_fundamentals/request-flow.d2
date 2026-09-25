@@ -1,0 +1,80 @@
+# Scaling Fundamentals — Stateless Horizontal Scaling Flow
+# d2 --sketch --layout elk request-flow.d2 ../../svg/1.3_scaling_fundamentals/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+lb: Load Balancer {
+  shape: hexagon
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+s1: Server 1 {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+s2: Server 2 {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+redis: Session Store\n(Redis) {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+db: Database {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+client -> lb: HTTP request
+lb -> s1: route (round-robin)
+s1 -> redis: GET session:abc123
+redis -> s1: session data
+s1 -> db: query
+db -> s1: result
+s1 -> client: HTTP response
+
+scenarios: {
+  session_sticky: {
+    lb: Load Balancer\n(sticky session) {
+    }
+    lb -> s2: sticky route (cookie) {
+      style.stroke: "#F39C12"
+      style.stroke-width: 3
+      style.animated: true
+    }
+    s2: Server 2\n(pinned) {
+      style.stroke-width: 4
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

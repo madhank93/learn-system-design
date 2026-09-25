@@ -1,0 +1,93 @@
+# Monoliths vs microservices — one checkout request, two architectures
+# One idea: in-process calls vs network hops + events.
+# Scenario microservice_failure: blast radius comparison.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+mono: "Monolith path" {
+  style.fill: "#F1EEE8"
+  style.stroke: "#E74C3C"
+
+  app: "App logic\nin-process calls" {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  db: "Shared DB" {
+    shape: cylinder
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  app -> db
+}
+
+micro: "Microservices path" {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  gw: "API gateway" {
+    shape: hexagon
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  order_svc: "Order service" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  payment_svc: "Payment service" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  bus: "Event bus" {
+    shape: queue
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  gw -> order_svc: "1. /orders"
+  order_svc -> payment_svc: "2. charge"
+  order_svc -> bus: "3. event" {
+    style.stroke-dash: 5
+    style.stroke: "#D35400"
+  }
+}
+
+client -> mono.app: "POST /checkout"
+client -> micro.gw: "POST /checkout"
+
+scenarios: {
+  microservice_failure: {
+    mono.app: "App logic\n✖ OOM kills ALL" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    micro.payment_svc: "Payment service\n✖ down — orders survive" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

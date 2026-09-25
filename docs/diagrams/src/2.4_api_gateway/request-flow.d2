@@ -1,0 +1,101 @@
+# API Gateway — Request Lifecycle
+# d2 --sketch --layout elk request-flow.d2 ../../svg/2.4_api_gateway/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+gateway: API Gateway {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+auth_svc: Auth Service {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+redis: Rate Limit Store\n(Redis) {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+order_svc: Order Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+order_db: Orders DB {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+queue: Event Queue {
+  shape: queue
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+email_svc: Email Service {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+client -> gateway: POST /orders\n+ Bearer JWT
+gateway -> auth_svc: validate JWT
+auth_svc -> gateway: user_id=42
+gateway -> redis: INCR rate:42
+redis -> gateway: under limit
+gateway -> order_svc: POST /orders
+order_svc -> order_db: INSERT order
+order_db -> order_svc: order_id=789
+order_svc -> queue: OrderCreated {
+  style.stroke-dash: 5
+  style.animated: true
+}
+order_svc -> gateway: 201 Created
+gateway -> client: "201 (order_id: 789)"
+queue -> email_svc: async consume {
+  style.stroke-dash: 5
+  style.animated: true
+}
+
+scenarios: {
+  circuit_open: {
+    order_svc: Order Service\n⚠ UNHEALTHY {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    gateway -> client: 503 + Retry-After {
+      style.stroke: "#E74C3C"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

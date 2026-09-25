@@ -1,0 +1,117 @@
+# ACID vs BASE — Bank Transfer vs Cart Update
+# d2 --sketch --layout elk request-flow.d2 ../../svg/1.6_acid_vs_base/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+acid_flow: ACID — Bank Transfer {
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  begin: BEGIN TRANSACTION {
+    style.fill: "#2471A3"
+    style.stroke: "#1A5276"
+    style.font-color: "#FFFFFF"
+  }
+
+  debit: UPDATE accounts\nSET balance = balance - 100\nWHERE id = 1 {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  credit: UPDATE accounts\nSET balance = balance + 100\nWHERE id = 2 {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  commit: COMMIT {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  rollback: ROLLBACK {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  begin -> debit
+  debit -> credit
+  credit -> commit: success
+  credit -> rollback: failure {
+    style.stroke: "#E74C3C"
+    style.stroke-dash: 5
+  }
+}
+
+base_flow: BASE — Shopping Cart {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  write: Add item to cart\n(POST /cart/items) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  local_replica: Local Replica\n(write + 200 OK) {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  async_sync: Async Replication {
+    style.fill: "#F1EEE8"
+    style.stroke: "#AEB6BF"
+  }
+
+  stale_read: Read on Peer Replica\n(may see old cart) {
+    shape: cylinder
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  converged: All Replicas Converge {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  write -> local_replica
+  local_replica -> async_sync: background {
+    style.stroke-dash: 5
+    style.animated: true
+  }
+  async_sync -> stale_read
+  async_sync -> converged: after sync window
+}
+
+scenarios: {
+  network_partition: {
+    base_flow.async_sync: Async Replication\n⚠ PARTITION {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    base_flow.stale_read: Read on Peer\n(diverged state) {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

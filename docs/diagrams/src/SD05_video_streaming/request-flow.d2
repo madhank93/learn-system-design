@@ -1,0 +1,82 @@
+# Video Streaming — HLS Playback Flow
+# d2 --sketch --layout elk request-flow.d2 ../../svg/SD05_video_streaming/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+viewer: Viewer {
+  shape: person
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+}
+
+auth: Playback Auth Service {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+cdn: CDN Edge PoP {
+  shape: cloud
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+abr: ABR Engine\n(client, bandwidth=5Mbps) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+buffer: 30s Video Buffer {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+viewer -> auth: GET /manifest
+auth -> viewer: signed URL
+viewer -> cdn: GET manifest
+cdn -> viewer: playlist (4 renditions)
+abr -> abr: 5Mbps → 720p
+viewer -> cdn: GET 720p/seg-001..015 {
+  style.stroke: "#27AE60"
+  style.stroke-width: 2
+  style.animated: true
+}
+cdn -> viewer: segment HIT 20ms
+viewer -> buffer: fill buffer
+buffer -> viewer: start playback
+
+scenarios: {
+  quality_switch: {
+    abr: ABR Engine\n↓ bandwidth drops to 1Mbps {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    viewer -> cdn: GET 360p/seg-016 {
+      style.stroke: "#E67E22"
+      style.stroke-width: 2
+    }
+  }
+
+  geo_restriction: {
+    auth: Playback Auth\n→ 403 Forbidden {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

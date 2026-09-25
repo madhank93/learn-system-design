@@ -1,0 +1,61 @@
+# CDN — One request's cache lifecycle
+# One idea: first request misses and warms the PoP; everyone after hits.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+user: "User — Berlin" {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+pop: "PoP Frankfurt" {
+  shape: cloud
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+  style.bold: true
+}
+
+origin: Origin {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+user -> pop: "1. GET logo.png"
+pop -> origin: "2. miss — pull" {
+  style.stroke-dash: 5
+  style.stroke: "#D35400"
+}
+origin -> pop: "3. cache 24h" {
+  style.stroke-dash: 5
+}
+pop -> user: "4. serve"
+
+scenarios: {
+  cache_hit: {
+    pop: "PoP Frankfurt ✓\ncached" {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.bold: false
+    }
+    origin: "Origin — idle" {
+      style.opacity: 0.3
+    }
+    (pop -> origin)[0].style.opacity: 0.2
+    (origin -> pop)[0].style.opacity: 0.2
+    pop -> user: "HIT — ~5ms" {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

@@ -1,0 +1,56 @@
+services:
+  consul:
+    image: hashicorp/consul:1.18
+    command: agent -dev -client=0.0.0.0
+    ports:
+      - "8500:8500"
+    networks:
+      - sdnet
+
+  svc-1:
+    build: ./service
+    environment:
+      - SERVICE_ID=svc-1
+      - SERVICE_NAME=user-service
+      - SERVICE_ADDR=svc-1
+      - CONSUL_ADDR=consul:8500
+    depends_on: [consul]
+    networks:
+      - sdnet
+
+  svc-2:
+    build: ./service
+    environment:
+      - SERVICE_ID=svc-2
+      - SERVICE_NAME=user-service
+      - SERVICE_ADDR=svc-2
+      - CONSUL_ADDR=consul:8500
+    depends_on: [consul]
+    networks:
+      - sdnet
+
+  svc-3:
+    build: ./service
+    environment:
+      - SERVICE_ID=svc-3
+      - SERVICE_NAME=user-service
+      - SERVICE_ADDR=svc-3
+      - CONSUL_ADDR=consul:8500
+    depends_on: [consul]
+    networks:
+      - sdnet
+
+  client:
+    build: ./client
+    environment:
+      - SERVICE_NAME=user-service
+      - CONSUL_ADDR=consul:8500
+    ports:
+      - "8080:8080"
+    depends_on: [svc-1, svc-2, svc-3]
+    networks:
+      - sdnet
+
+networks:
+  sdnet:
+    driver: bridge

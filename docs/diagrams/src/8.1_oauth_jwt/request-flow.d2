@@ -1,0 +1,83 @@
+# OAuth 2.0 — JWT Validation at API Gateway
+# d2 --sketch --layout elk request-flow.d2 ../../svg/8.1_oauth_jwt/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+gateway: API Gateway {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+jwks: JWKS Endpoint\n(public keys) {
+  shape: cloud
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+upstream: Order Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+valid: Valid Token\n→ forward request {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+invalid: 401 Unauthorized {
+  style.fill: "#E74C3C"
+  style.stroke: "#C0392B"
+  style.font-color: "#FFFFFF"
+}
+
+client -> gateway: GET /orders\nAuthorization: Bearer eyJ...
+gateway -> gateway: decode header → alg=RS256, kid=key-2024-01
+gateway -> jwks: GET /.well-known/jwks.json\n(cached or fetch)
+jwks -> gateway: "(kid:key-2024-01, public n+e values)"
+gateway -> gateway: verify RSASHA256 signature
+gateway -> gateway: check claims:\nexp not past, iss matches, aud=api
+gateway -> valid: all checks pass
+valid -> upstream: GET /orders\nX-User-Id: 42\nX-Scopes: orders:read
+upstream -> client: 200 OK
+gateway -> invalid: any check fails {
+  style.stroke-dash: 5
+  style.stroke: "#E74C3C"
+}
+invalid -> client: 401 {
+  style.stroke: "#E74C3C"
+}
+
+scenarios: {
+  key_rotation: {
+    jwks: JWKS Endpoint\n(2 keys: old + new) {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+    gateway: API Gateway\n(cache both keys during rotation) {
+      style.stroke-width: 3
+    }
+  }
+}

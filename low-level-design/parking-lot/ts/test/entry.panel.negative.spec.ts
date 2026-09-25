@@ -44,7 +44,7 @@ describe("Entry panel negative tests cases", () => {
     entryPanel.getParkingTicket(bike);
 
     expect(() => entryPanel.getParkingTicket(bike)).toThrowError(
-      "No spots are available for Motorcycle"
+      "Parking is unsupported for this Motorcycle type"
     );
   });
 });

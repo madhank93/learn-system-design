@@ -1,0 +1,79 @@
+# Bloom Filter — Web Crawler URL Deduplication
+# d2 --sketch --layout elk request-flow.d2 ../../svg/7.1_bloom_filter/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+crawler: Web Crawler {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+bloom: Bloom Filter\n(1 billion URLs, ~1.25GB) {
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+hash3: Compute 3 hashes\ncheck 3 bit positions {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+miss_path: Any bit = 0\n→ DEFINITELY NEW URL {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+hit_path: All bits = 1\n→ PROBABLY CRAWLED → skip {
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+queue: Crawl Queue {
+  shape: queue
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+set_bits: Set 3 bits in filter {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+crawler -> bloom: check "https://example.com/page1"
+bloom -> hash3
+hash3 -> miss_path: new URL
+hash3 -> hit_path: seen URL {
+  style.stroke-dash: 5
+}
+miss_path -> queue: add to crawl queue
+queue -> crawler: crawl page
+crawler -> set_bits: mark URL as seen
+set_bits -> bloom: update filter
+
+scenarios: {
+  reset: {
+    bloom: Bloom Filter\n(rolling window) {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

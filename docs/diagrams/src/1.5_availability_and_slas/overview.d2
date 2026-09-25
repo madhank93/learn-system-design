@@ -1,0 +1,112 @@
+# Availability and SLAs — HA Multi-Region Architecture
+# d2 --sketch --layout elk overview.d2 ../../svg/1.5_availability_and_slas/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+geodns: GeoDNS {
+  shape: cloud
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+region_a: Region A (Primary) {
+  direction: right
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  app_a: LB + App Tier {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  db_primary: DB Primary {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  app_a -> db_primary
+}
+
+region_b: Region B (Standby) {
+  direction: right
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  app_b: LB + App Tier {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  db_replica: DB Replica {
+    shape: cylinder
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  app_b -> db_replica: read traffic
+}
+
+region_a.db_primary -> region_b.db_replica: async replication {
+  style.stroke-dash: 5
+  style.stroke: "#8E44AD"
+}
+
+client -> geodns
+geodns -> region_a.app_a: primary traffic
+geodns -> region_b.app_b: standby {
+  style.stroke-dash: 5
+  style.opacity: 0.4
+}
+
+scenarios: {
+  region_a_down: {
+    region_a: Region A — DOWN {
+      style.fill: "#F1EEE8"
+      style.stroke: "#E74C3C"
+    }
+    region_a.app_a: App Tier ⚠ DOWN {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    geodns -> region_a.app_a: health check FAIL {
+      style.stroke: "#E74C3C"
+      style.stroke-dash: 5
+      style.opacity: 0.3
+    }
+    geodns -> region_b.app_b: FAILOVER {
+      style.stroke: "#27AE60"
+      style.stroke-width: 4
+      style.animated: true
+      style.font-color: "#27AE60"
+    }
+    region_b.db_replica: DB → PROMOTED {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

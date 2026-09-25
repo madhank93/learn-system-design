@@ -1,0 +1,141 @@
+go 1.25.1
+
+// Resolve local-only module without proxy/sum-db lookup
+replace example.com/maelstrom v0.1.0 => ./high-level-design/distributed-challenges/maelstrom
+
+use ./low-level-design/parking-lot/go
+
+// ── Basics (prerequisites) ────────────────────────────────────
+use ./high-level-design/basics/1.2_networking_fundamentals
+
+use ./high-level-design/basics/1.3_scaling_fundamentals
+
+use ./high-level-design/basics/1.4_latency_and_throughput
+
+use ./high-level-design/basics/1.5_availability_and_slas
+
+use ./high-level-design/basics/1.6_acid_vs_base
+
+// ── Networking & Edge ─────────────────────────────────────────
+use ./high-level-design/networking-and-edge/2.1_load_balancer/server
+
+use ./high-level-design/networking-and-edge/2.2_cdn/origin
+
+use ./high-level-design/networking-and-edge/2.3_dns/service
+
+use ./high-level-design/networking-and-edge/2.3_dns/client
+
+use ./high-level-design/networking-and-edge/2.4_api_gateway/user-service
+
+use ./high-level-design/networking-and-edge/2.4_api_gateway/product-service
+
+use ./high-level-design/networking-and-edge/2.5_websockets_sse/server
+
+// ── Scalability ───────────────────────────────────────────────
+use ./high-level-design/scalability/3.1_caching/server
+
+use ./high-level-design/scalability/3.2_rate_limiting/server
+
+use ./high-level-design/scalability/3.3_db_sharding/shard
+
+use ./high-level-design/scalability/3.3_db_sharding/router
+
+use ./high-level-design/scalability/3.4_db_replication/primary
+
+use ./high-level-design/scalability/3.4_db_replication/replica
+
+// ── Data & Consistency ────────────────────────────────────────
+use ./high-level-design/data-and-consistency/4.1_cap_theorem/node
+
+use ./high-level-design/data-and-consistency/4.2_sql_vs_nosql/sql-service
+
+use ./high-level-design/data-and-consistency/4.2_sql_vs_nosql/nosql-service
+
+use ./high-level-design/data-and-consistency/4.3_consistent_hashing/node
+
+use ./high-level-design/data-and-consistency/4.3_consistent_hashing/router
+
+use ./high-level-design/data-and-consistency/4.4_cqrs_event_sourcing/writer
+
+use ./high-level-design/data-and-consistency/4.4_cqrs_event_sourcing/reader
+
+use ./high-level-design/data-and-consistency/4.5_leader_election/node
+
+// ── Resilience ────────────────────────────────────────────────
+use ./high-level-design/resilience/5.1_circuit_breaker/backend
+
+use ./high-level-design/resilience/5.1_circuit_breaker/proxy
+
+use ./high-level-design/resilience/5.2_retry_backoff/backend
+
+use ./high-level-design/resilience/5.2_retry_backoff/client
+
+use ./high-level-design/resilience/5.3_distributed_locking/worker
+
+// ── Async & Communication ─────────────────────────────────────
+use ./high-level-design/async-and-communication/6.1_message_queues/producer
+
+use ./high-level-design/async-and-communication/6.1_message_queues/consumer
+
+use ./high-level-design/async-and-communication/6.2_service_discovery/service
+
+use ./high-level-design/async-and-communication/6.2_service_discovery/client
+
+use ./high-level-design/async-and-communication/6.3_distributed_tracing/frontend
+
+use ./high-level-design/async-and-communication/6.3_distributed_tracing/order-service
+
+use ./high-level-design/async-and-communication/6.3_distributed_tracing/inventory-service
+
+// ── Algorithms ────────────────────────────────────────────────
+use ./high-level-design/algorithms/7.1_bloom_filter/server
+
+use ./high-level-design/algorithms/7.2_geohashing/server
+
+use ./high-level-design/algorithms/7.3_indexing/server
+
+// ── Security ──────────────────────────────────────────────────
+use ./high-level-design/security/8.1_oauth_jwt/auth-server
+
+use ./high-level-design/security/8.1_oauth_jwt/resource-server
+
+// ── Real-world Designs ────────────────────────────────────────
+use ./high-level-design/real-world-designs/SD01_url_shortener/api
+
+use ./high-level-design/real-world-designs/SD02_twitter_feed/api
+
+use ./high-level-design/real-world-designs/SD03_ride_sharing/api
+
+use ./high-level-design/real-world-designs/SD04_realtime_chat/api
+
+use ./high-level-design/real-world-designs/SD05_video_streaming/api
+
+// ── Distributed Challenges (Gossip Glomers) ───────────────────
+use ./high-level-design/distributed-challenges/maelstrom
+
+use ./high-level-design/distributed-challenges/c1_echo
+
+use ./high-level-design/distributed-challenges/c2_unique_ids
+
+use ./high-level-design/distributed-challenges/c3a_broadcast_single
+
+use ./high-level-design/distributed-challenges/c3b_broadcast_multi
+
+use ./high-level-design/distributed-challenges/c3c_broadcast_fault_tolerant
+
+use ./high-level-design/distributed-challenges/c3d_broadcast_efficient
+
+use ./high-level-design/distributed-challenges/c4_grow_only_counter
+
+use ./high-level-design/distributed-challenges/c5a_kafka_single
+
+use ./high-level-design/distributed-challenges/c5b_kafka_multi
+
+use ./high-level-design/distributed-challenges/c5c_kafka_efficient
+
+use ./high-level-design/distributed-challenges/c6a_txn_read_uncommitted
+
+use (
+	./high-level-design/distributed-challenges/c6b_txn_read_committed
+	./syslings
+)

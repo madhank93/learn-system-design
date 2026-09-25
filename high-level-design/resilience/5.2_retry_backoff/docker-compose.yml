@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      - FAIL_RATE=60
+    ports:
+      - "8080:8080"
+
+  client:
+    build: ./client
+    environment:
+      - BACKEND_URL=http://backend:8080
+    ports:
+      - "8081:8081"
+    depends_on:
+      - backend

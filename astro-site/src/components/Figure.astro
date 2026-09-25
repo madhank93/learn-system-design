@@ -1,0 +1,18 @@
+---
+/**
+ * Frames a diagram in the same card as the interactive islands and adds an
+ * optional caption. Wrapping in `.not-content` opts the contents out of
+ * Starlight's prose spacing (which otherwise injects margins around the SVG).
+ * Use it around build-time ```mermaid blocks; the interactive React islands
+ * already render their own `.lsd-diagram` frame.
+ */
+interface Props {
+  caption?: string;
+}
+const { caption } = Astro.props;
+---
+
+<figure class="lsd-figure not-content">
+  <slot />
+  {caption && <figcaption class="lsd-figcaption">{caption}</figcaption>}
+</figure>

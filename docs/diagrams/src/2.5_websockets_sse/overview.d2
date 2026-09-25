@@ -1,0 +1,122 @@
+# WebSockets and SSE — Architecture Comparison
+# d2 --sketch --layout elk overview.d2 ../../svg/2.5_websockets_sse/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+ws_side: WebSocket {
+  direction: right
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  client_ws: Client {
+    shape: person
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+  }
+
+  ws_server1: WS Server 1 {
+    shape: hexagon
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  ws_server2: WS Server 2 {
+    shape: hexagon
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  pubsub: Redis Pub/Sub {
+    shape: queue
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  client_ws -> ws_server1: WS frames (bidirectional) {
+    style.stroke: "#3498DB"
+    style.stroke-width: 2
+  }
+  ws_server1 -> client_ws: push messages {
+    style.stroke: "#3498DB"
+    style.stroke-width: 2
+  }
+  ws_server1 -> pubsub: publish {
+    style.stroke-dash: 5
+  }
+  pubsub -> ws_server2: subscribe {
+    style.stroke-dash: 5
+    style.animated: true
+  }
+}
+
+sse_side: Server-Sent Events (SSE) {
+  direction: right
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  client_sse: Client {
+    shape: person
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+  }
+
+  sse_server: SSE Server {
+    shape: hexagon
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  event_store: Event Stream {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  sse_server -> client_sse: "data: (event)" {
+    style.stroke: "#27AE60"
+    style.stroke-width: 2
+    style.animated: true
+  }
+  event_store -> sse_server: new events
+}
+
+scenarios: {
+  ws_reconnect: {
+    ws_side.client_ws -> ws_side.ws_server1: connection lost {
+      style.stroke: "#E74C3C"
+      style.stroke-dash: 5
+    }
+    ws_side.ws_server1: WS Server 1\n⚠ reconnecting {
+      style.stroke: "#E74C3C"
+      style.font-color: "#E74C3C"
+    }
+  }
+
+  sse_backpressure: {
+    sse_side.sse_server -> sse_side.client_sse: buffering events... {
+      style.stroke: "#E67E22"
+      style.stroke-width: 4
+    }
+    sse_side.client_sse: Client\n(slow consumer) {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

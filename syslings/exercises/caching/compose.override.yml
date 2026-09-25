@@ -1,0 +1,8 @@
+# Mounts the learner's work-dir confs over the pristine repo confs.
+services:
+  nginx-proxy-cache:
+    volumes:
+      - ${SYSLINGS_WORK}/proxy_cache.conf:/etc/nginx/conf.d/default.conf:ro
+  nginx-stale:
+    volumes:
+      - ${SYSLINGS_WORK}/stale.conf:/etc/nginx/conf.d/default.conf:ro

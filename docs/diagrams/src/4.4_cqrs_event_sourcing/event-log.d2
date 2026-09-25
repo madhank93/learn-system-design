@@ -1,0 +1,35 @@
+# CQRS and Event Sourcing — Append-Only Event Log Sample
+# d2 --sketch --layout elk event-log.d2 ../../svg/4.4_cqrs_event_sourcing/event-log.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+event_log: Event Store (append-only) {
+  style.fill: "#F1EEE8"
+  style.stroke: "#D35400"
+
+  e1: "1. OrderCreated\nid:1, amount:100" {
+    style.fill: "#F1EEE8"
+    style.stroke: "#D35400"
+  }
+  e2: "2. ItemAdded\norderId:1, item:shoe" {
+    style.fill: "#F1EEE8"
+    style.stroke: "#D35400"
+  }
+  e3: "3. OrderShipped\norderId:1" {
+    style.fill: "#F1EEE8"
+    style.stroke: "#D35400"
+  }
+
+  e1 -> e2 -> e3: append-only
+}

@@ -1,0 +1,92 @@
+# Video Streaming — Netflix-Style Playback Architecture
+# d2 --sketch --layout elk overview.d2 ../../svg/SD05_video_streaming/overview.svg
+# Upload/transcode ingest is shown separately in upload-pipeline.d2
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+segments: Transcoded Segments\n(S3, multi-bitrate) {
+  shape: cylinder
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+cdn_origin: CDN Origin {
+  shape: cloud
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+playback: Playback Path {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  viewer: Viewer {
+    shape: person
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+  }
+
+  auth_svc: Playback Auth\n(signed URLs) {
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  cdn_edge: CDN Edge PoP {
+    shape: cloud
+    style.fill: "#D35400"
+    style.stroke: "#A04000"
+    style.font-color: "#FFFFFF"
+  }
+
+  abr: ABR Engine\n(client-side) {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  viewer -> auth_svc: GET /manifest
+  auth_svc -> viewer: signed URL
+  viewer -> cdn_edge: fetch segments
+  cdn_edge -> abr: segments delivered
+  abr -> viewer: smooth playback
+}
+
+segments -> cdn_origin: ingest
+cdn_origin -> playback.cdn_edge: segments (on miss)
+
+scenarios: {
+  bandwidth_drop: {
+    playback.abr: ABR Engine\n↓ 1080p → 480p {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+  }
+
+  cdn_miss: {
+    playback.cdn_edge: CDN Edge\n(MISS — first viewer) {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    cdn_origin -> playback.cdn_edge: origin pull {
+      style.stroke: "#3498DB"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+  }
+}

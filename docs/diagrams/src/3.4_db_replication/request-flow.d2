@@ -1,0 +1,101 @@
+# DB replication — failover walkthrough (animated steps)
+# Fixed topology; each step changes exactly one thing.
+# Frames: ① normal writes → ② heartbeat missed → ③ promote replica → ④ pointer updated → ⑤ writes resume
+
+vars: { d2-config: { layout-engine: elk } }
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+app: "App server" {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+primary: "Primary" {
+  shape: cylinder
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+replica: "Replica 1" {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+orch: "Orchestrator" {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+app -> primary: "write" {
+  style.stroke: "#3498DB"
+}
+primary -> replica: "WAL" {
+  style.stroke-dash: 5
+  style.stroke: "#27AE60"
+}
+primary -> orch: "heartbeat" {
+  style.stroke-dash: 5
+  style.stroke: "#5D6D7E"
+}
+
+note: "failover — 5 steps" {
+  shape: text
+  near: top-center
+  style.font-size: 18
+  style.bold: true
+}
+
+steps: {
+  1: {
+    note: "① writes flow; WAL streams to replica"
+    (app -> primary)[0].style.animated: true
+  }
+  2: {
+    note: "② heartbeat missed 30 s — primary presumed dead"
+    primary: "Primary ✖" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+    }
+    (primary -> orch)[0]: "heartbeat ✖" {
+      style.stroke: "#E74C3C"
+      style.opacity: 0.4
+    }
+  }
+  3: {
+    note: "③ orchestrator promotes the replica"
+    orch -> replica: "PROMOTE" {
+      style.stroke: "#D35400"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+  4: {
+    note: "④ service discovery points app at new primary"
+    orch -> app: "new primary" {
+      style.stroke: "#D35400"
+      style.stroke-dash: 5
+    }
+  }
+  5: {
+    note: "⑤ writes resume on promoted replica"
+    replica: "Replica 1\n→ new primary" {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+    }
+    app -> replica: "write" {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+}

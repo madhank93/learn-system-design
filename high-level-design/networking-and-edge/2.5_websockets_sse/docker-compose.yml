@@ -1,0 +1,20 @@
+services:
+  server:
+    build: ./server
+    networks:
+      - wsnet
+
+  nginx:
+    build: ./nginx
+    volumes:
+      - ${PWD}/nginx/ws_proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    networks:
+      - wsnet
+
+networks:
+  wsnet:
+    driver: bridge

@@ -1,0 +1,99 @@
+# Monoliths vs microservices — deployment models side by side
+# One idea: one deployable unit vs many; one DB vs one per service.
+# Scenario deploy_risk: monolith deploys all-or-nothing.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+monolith: Monolith {
+  style.fill: "#F1EEE8"
+  style.stroke: "#E74C3C"
+
+  app: "App\nuser + order + payment" {
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  db: "Single DB" {
+    shape: cylinder
+    style.fill: "#E74C3C"
+    style.stroke: "#C0392B"
+    style.font-color: "#FFFFFF"
+  }
+
+  app -> db: "shared schema"
+}
+
+micro: Microservices {
+  style.fill: "#F1EEE8"
+  style.stroke: "#27AE60"
+
+  gw: "API gateway" {
+    shape: hexagon
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  user_svc: "User service" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  order_svc: "Order service" {
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  user_db: "Users DB" {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  order_db: "Orders DB" {
+    shape: cylinder
+    style.fill: "#27AE60"
+    style.stroke: "#1E8449"
+    style.font-color: "#FFFFFF"
+  }
+
+  gw -> user_svc: "/users"
+  gw -> order_svc: "/orders"
+  user_svc -> user_db
+  order_svc -> order_db
+}
+
+client -> monolith.app: "request"
+client -> micro.gw: "request"
+
+scenarios: {
+  deploy_risk: {
+    monolith.app: "App\n⚠ deploy ALL or nothing" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    micro.order_svc: "Order service\n✓ deploys alone" {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+      style.stroke-width: 4
+    }
+  }
+}

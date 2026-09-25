@@ -1,0 +1,91 @@
+# DNS — Full Resolution Walk-Through
+# d2 --sketch --layout elk request-flow.d2 ../../svg/2.3_dns/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+browser: Browser {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+local_cache: OS DNS Cache\n(+ /etc/hosts) {
+  style.fill: "#F1EEE8"
+  style.stroke: "#F39C12"
+}
+
+resolver: Recursive Resolver {
+  shape: cloud
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+root: Root NS (.) {
+  shape: cloud
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+tld: .com TLD NS {
+  shape: cloud
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+auth: ns1.example.com {
+  shape: cloud
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+server: 93.184.216.34:443 {
+  shape: hexagon
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+browser -> local_cache: 1. check cache
+local_cache -> resolver: 2. MISS — query resolver {
+  style.stroke-dash: 5
+}
+resolver -> root: 3. who handles .com?
+root -> resolver: 4. NS for .com: a.gtld-servers.net
+resolver -> tld: 5. who handles example.com?
+tld -> resolver: 6. NS: ns1.example.com
+resolver -> auth: 7. IP for example.com?
+auth -> resolver: 8. A: 93.184.216.34 TTL=3600
+resolver -> browser: 9. return IP (cached)
+browser -> server: 10. TCP connect + TLS
+
+scenarios: {
+  dnssec: {
+    auth: ns1.example.com\n+ DNSSEC {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+      style.stroke-width: 3
+    }
+    resolver: Recursive Resolver\n(DNSSEC-validating) {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+      style.stroke-width: 3
+    }
+  }
+}

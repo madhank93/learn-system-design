@@ -1,0 +1,96 @@
+# Consistent Hashing — Cache Lookup and Node Failure
+# d2 --sketch --layout elk request-flow.d2 ../../svg/4.3_consistent_hashing/request-flow.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: App Server {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+hash_fn: hash(user_id=12345)\n= position 67 {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+ring_lookup: Ring Lookup:\nfirst node ≥ 67\n→ Node B (pos=120) {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+node_b: Node B {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+cache_hit: Cache HIT\n→ 1ms response {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+node_b_down: Node B DOWN {
+  style.fill: "#E74C3C"
+  style.stroke: "#C0392B"
+  style.font-color: "#FFFFFF"
+}
+
+new_lookup: Ring Lookup:\nnext node ≥ 120\n→ Node C (pos=200) {
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+node_c: Node C {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+cache_miss: Cache MISS\n→ warm from DB {
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+client -> hash_fn
+hash_fn -> ring_lookup
+ring_lookup -> node_b
+node_b -> cache_hit: HIT ✓
+node_b -> node_b_down: node fails {
+  style.stroke-dash: 5
+  style.stroke: "#E74C3C"
+}
+node_b_down -> new_lookup: ring recomputed
+new_lookup -> node_c
+node_c -> cache_miss
+
+scenarios: {
+  rebalance: {
+    ring_lookup: New Node E\n(pos=85) added {
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.font-color: "#FFFFFF"
+    }
+    node_b: Node B\n(keys 85→120 remain) {
+      style.stroke-width: 3
+    }
+  }
+}

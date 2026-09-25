@@ -1,0 +1,115 @@
+# Ride Sharing — System Architecture
+# d2 --sketch --layout elk overview.d2 ../../svg/SD03_ride_sharing/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+mobile: Mobile App\n(Rider + Driver) {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+gateway: API Gateway {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+location_svc: Location Service {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+matching_svc: Matching Service {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+trip_svc: Trip Service {
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+pricing_svc: Pricing Service {
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+payment_svc: Payment Service {
+  style.fill: "#E74C3C"
+  style.stroke: "#C0392B"
+  style.font-color: "#FFFFFF"
+}
+
+notif_svc: Notification Service {
+  style.fill: "#5D6D7E"
+  style.stroke: "#808B96"
+  style.font-color: "#FFFFFF"
+}
+
+location_store: Location Store\n(Redis GeoIndex) {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+trip_db: Trip DB\n(PostgreSQL) {
+  shape: cylinder
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+kafka: Event Stream\n(Kafka) {
+  shape: queue
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+mobile -> gateway
+gateway -> location_svc: driver location update
+gateway -> matching_svc: rider request
+gateway -> trip_svc: trip status
+location_svc -> location_store: GEOADD
+matching_svc -> location_store: GEOSEARCH
+matching_svc -> trip_svc: create trip
+trip_svc -> trip_db: persist
+trip_svc -> notif_svc: push notification {
+  style.stroke-dash: 5
+}
+trip_svc -> kafka: trip events {
+  style.stroke-dash: 5
+}
+kafka -> payment_svc: trip completed {
+  style.stroke-dash: 5
+  style.animated: true
+}
+trip_svc -> pricing_svc: get fare estimate
+
+scenarios: {
+  surge_pricing: {
+    pricing_svc: Pricing Service\n⚠ SURGE 2.5× {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

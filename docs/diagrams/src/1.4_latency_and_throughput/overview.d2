@@ -1,0 +1,102 @@
+# Latency and Throughput — Request Latency Profile
+# d2 --sketch --layout elk overview.d2 ../../svg/1.4_latency_and_throughput/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+client: Client {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+edge: Network Edge\nISP + CDN (~25ms) {
+  shape: cloud
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+datacenter: Data Center {
+  direction: right
+  style.fill: "#F1EEE8"
+  style.stroke: "#2471A3"
+
+  lb: Load Balancer\n(~1ms) {
+    shape: hexagon
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  app: App Server\n(~50ms) {
+    style.fill: "#3498DB"
+    style.stroke: "#2471A3"
+    style.font-color: "#FFFFFF"
+  }
+
+  db: Database\n(~10ms) {
+    shape: cylinder
+    style.fill: "#5D6D7E"
+    style.stroke: "#424949"
+    style.font-color: "#FFFFFF"
+  }
+
+  lb -> app
+  app -> db
+  db -> app: result
+}
+
+total: Total P50: ~86ms {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+client -> edge: request
+edge -> datacenter.lb
+datacenter.app -> total: response
+
+scenarios: {
+  cache_hit: {
+    edge: Network Edge\n✓ CDN Cache HIT (~5ms) {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+    datacenter.app: App Server {
+      style.opacity: 0.2
+    }
+    datacenter.db: Database {
+      style.opacity: 0.2
+    }
+    total: Total P50: ~25ms {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+  }
+
+  db_slow: {
+    datacenter.db: Database\n⚠ SLOW (800ms) {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+    total: Total P50: ~876ms {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.font-color: "#FFFFFF"
+    }
+  }
+}

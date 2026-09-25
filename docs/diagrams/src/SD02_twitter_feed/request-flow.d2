@@ -1,0 +1,92 @@
+# Twitter feed — write path fanout (animated steps)
+# Fixed topology; each step advances the tweet one hop.
+# Frames: ① post → ② persist → ③ fanout trigger → ④ push to 500 timelines → ⑤ followers see it
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+user: "User B\n500 followers" {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+tweet_svc: "Tweet service" {
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+  style.bold: true
+}
+
+store: "Tweet store" {
+  shape: cylinder
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+fanout: "Fanout service" {
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+timelines: "Timeline cache" {
+  shape: cylinder
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+note: "write path — 5 steps" {
+  shape: text
+  near: top-center
+  style.font-size: 18
+  style.bold: true
+}
+
+steps: {
+  1: {
+    note: "① POST /tweets — Hello world"
+    user -> tweet_svc: "1. post" {
+      style.stroke: "#3498DB"
+      style.animated: true
+    }
+  }
+  2: {
+    note: "② tweet T789 persisted"
+    tweet_svc -> store: "2. INSERT" {
+      style.stroke: "#27AE60"
+      style.animated: true
+    }
+  }
+  3: {
+    note: "③ async fanout job triggered"
+    tweet_svc -> fanout: "3. fan out" {
+      style.stroke-dash: 5
+      style.stroke: "#D35400"
+      style.animated: true
+    }
+  }
+  4: {
+    note: "④ T789 pushed to 500 follower timelines"
+    fanout -> timelines: "4. ZADD ×500" {
+      style.stroke-dash: 5
+      style.stroke: "#D35400"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+  5: {
+    note: "⑤ next feed read finds T789 precomputed"
+    timelines: "Timeline cache\n✓ T789 ready" {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+    }
+  }
+}

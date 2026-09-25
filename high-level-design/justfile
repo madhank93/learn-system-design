@@ -1,39 +1,604 @@
-# Reusable commands
-docker-clean:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  docker system prune -af --volumes
-  docker builder prune -af
+# ─────────────────────────────────────────────────────────────
+#  HLD Justfile — system design learning path
+#  Usage: just <recipe>   e.g.  just list   just caching-up
+# ─────────────────────────────────────────────────────────────
 
-compose-down dir:
-    @echo "Stopping containers in {{dir}}..."
-    cd {{dir}} && docker compose down --rmi all --volumes --remove-orphans
+list:
+    @just --list
+
+# ── Shared helpers ────────────────────────────────────────────
+
+docker-clean:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    docker system prune -af --volumes
+    docker builder prune -af
 
 compose-up dir:
-    @echo "Starting containers in {{dir}}..."
+    @echo "Starting {{dir}}..."
     cd {{dir}} && docker compose up --force-recreate --build -d
 
-##########################
-### 02 - Load balancer ###
-##########################
+compose-down dir:
+    @echo "Stopping {{dir}}..."
+    cd {{dir}} && docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
 
-# Set the load balancer directory
-lb_dir := "02_load_balancer"
+run-test dir:
+    @echo "Testing {{dir}}..."
+    @bash {{dir}}/test.sh
 
-load_balancer_up:
-    @just compose-down {{lb_dir}}
-    @just docker-clean
-    @just compose-up {{lb_dir}}
-    @echo ""
-    @echo "Load balancer is running"
+lab-check dir step:
+    @bash {{dir}}/lab/check.sh {{step}}
 
-load_balancer_test:
-    @echo ""
-    @echo "Running load balancer tests..."
-    @bash {{lb_dir}}/test.sh
+# Smoke-run every topic lab happy-path end-to-end (Docker required).
+# WARNING: tears down and rebuilds each topic's compose stack — don't run mid-lab.
+lab-verify-all:
+    @bash networking-and-edge/2.1_load_balancer/lab/verify.sh
+    @just syslings-verify load-balancing
+    @just syslings-verify caching
 
-load_balancer_down:
-    @just compose-down {{lb_dir}}
-    @just docker-clean
-    @echo ""
-    @echo "Load balancer stopped and cleaned"
+# syslings — rustlings-style interactive exercises (fix broken configs against
+# the live stack, watch mode, hints). Runs the TUI for a topic.
+syslings *topic:
+    cd ../syslings && go run . {{topic}}
+
+# CI: prove every syslings exercise is solvable (seeds solutions, runs checks).
+# WARNING: rebuilds the topic's compose stack — don't run mid-session.
+syslings-verify topic="load-balancing":
+    cd ../syslings && go run . verify {{topic}}
+
+# ── Go unit tests (no Docker needed) ─────────────────────────
+
+unit-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd ..
+    go test -v -count=1 \
+        networking-fundamentals \
+        scaling-fundamentals \
+        latency-throughput \
+        availability-slas \
+        acid-vs-base \
+        db-shard shard-router \
+        ch-router \
+        cb-proxy \
+        db-primary db-replica \
+        bloom-server \
+        retry-client \
+        dist-lock-worker \
+        leader-election-node \
+        geohash-server \
+        indexing-server \
+        auth-server \
+        url-shortener \
+        twitter-feed \
+        ride-sharing \
+        realtime-chat \
+        video-streaming
+    echo "All unit tests passed"
+
+# Integration tests — spins up real Docker containers via Testcontainers
+# Requires Docker daemon running. Each test manages its own container lifecycle.
+integration-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd ..
+    go test -v -count=1 -tags integration -timeout 300s \
+        dist-lock-worker \
+        cqrs-writer \
+        cqrs-reader \
+        mq-producer \
+        mq-consumer \
+        sd-service \
+        sd-client
+    echo "All integration tests passed"
+
+# ══════════════════════════════════════════════════════════════
+# 1. BASICS
+# ══════════════════════════════════════════════════════════════
+
+# ── 1.1 Monoliths vs Microservices ───────────────────────────
+# (markdown only — conceptual overview)
+
+# ── 1.2–1.6 Basics (pure Go, no Docker) ──────────────────────
+# Run via: just unit-test  (included in unit-test recipe above)
+
+# ══════════════════════════════════════════════════════════════
+# 2. NETWORKING & EDGE
+# ══════════════════════════════════════════════════════════════
+
+# ── 2.1 Load Balancing ────────────────────────────────────────
+
+load-balancing-up:
+    @just compose-up networking-and-edge/2.1_load_balancer
+
+load-balancing-test:
+    @just run-test networking-and-edge/2.1_load_balancer
+
+load-balancing-down:
+    @just compose-down networking-and-edge/2.1_load_balancer
+
+load-balancing-lab:
+    @bash networking-and-edge/2.1_load_balancer/lab/check.sh steps
+
+load-balancing-lab-check step:
+    @just lab-check networking-and-edge/2.1_load_balancer {{step}}
+
+# ── 2.2 CDN ───────────────────────────────────────────────────
+
+cdn-up:
+    @just compose-up networking-and-edge/2.2_cdn
+
+cdn-test:
+    @just run-test networking-and-edge/2.2_cdn
+
+cdn-down:
+    @just compose-down networking-and-edge/2.2_cdn
+
+# ── 2.3 DNS ───────────────────────────────────────────────────
+
+dns-up:
+    @just compose-up networking-and-edge/2.3_dns
+
+dns-test:
+    @just run-test networking-and-edge/2.3_dns
+
+dns-down:
+    @just compose-down networking-and-edge/2.3_dns
+
+# ── 2.4 API Gateway ───────────────────────────────────────────
+
+api-gateway-up:
+    @just compose-up networking-and-edge/2.4_api_gateway
+
+api-gateway-test:
+    @just run-test networking-and-edge/2.4_api_gateway
+
+api-gateway-down:
+    @just compose-down networking-and-edge/2.4_api_gateway
+
+# ── 2.5 WebSockets / SSE ──────────────────────────────────────
+
+websockets-up:
+    @just compose-up networking-and-edge/2.5_websockets_sse
+
+websockets-test:
+    @just run-test networking-and-edge/2.5_websockets_sse
+
+websockets-down:
+    @just compose-down networking-and-edge/2.5_websockets_sse
+
+# ══════════════════════════════════════════════════════════════
+# 3. SCALABILITY
+# ══════════════════════════════════════════════════════════════
+
+# ── 3.1 Caching ───────────────────────────────────────────────
+
+caching-up:
+    @just compose-up scalability/3.1_caching
+
+caching-test:
+    @just run-test scalability/3.1_caching
+
+caching-down:
+    @just compose-down scalability/3.1_caching
+
+# ── 3.2 Rate Limiting ─────────────────────────────────────────
+
+rate-limiting-up:
+    @just compose-up scalability/3.2_rate_limiting
+
+rate-limiting-test:
+    @just run-test scalability/3.2_rate_limiting
+
+rate-limiting-down:
+    @just compose-down scalability/3.2_rate_limiting
+
+# ── 3.3 Database Sharding ─────────────────────────────────────
+
+db-sharding-up:
+    @just compose-up scalability/3.3_db_sharding
+
+db-sharding-test:
+    @just run-test scalability/3.3_db_sharding
+
+db-sharding-down:
+    @just compose-down scalability/3.3_db_sharding
+
+# ── 3.4 Database Replication ──────────────────────────────────
+
+db-replication-up:
+    @just compose-up scalability/3.4_db_replication
+
+db-replication-test:
+    @just run-test scalability/3.4_db_replication
+
+db-replication-down:
+    @just compose-down scalability/3.4_db_replication
+
+# ══════════════════════════════════════════════════════════════
+# 4. DATA & CONSISTENCY
+# ══════════════════════════════════════════════════════════════
+
+# ── 4.1 CAP Theorem ───────────────────────────────────────────
+
+cap-theorem-up:
+    @just compose-up data-and-consistency/4.1_cap_theorem
+
+cap-theorem-test:
+    @just run-test data-and-consistency/4.1_cap_theorem
+
+cap-theorem-down:
+    @just compose-down data-and-consistency/4.1_cap_theorem
+
+# ── 4.2 SQL vs NoSQL ──────────────────────────────────────────
+
+sql-vs-nosql-up:
+    @just compose-up data-and-consistency/4.2_sql_vs_nosql
+
+sql-vs-nosql-test:
+    @just run-test data-and-consistency/4.2_sql_vs_nosql
+
+sql-vs-nosql-down:
+    @just compose-down data-and-consistency/4.2_sql_vs_nosql
+
+# ── 4.3 Consistent Hashing ────────────────────────────────────
+
+consistent-hashing-up:
+    @just compose-up data-and-consistency/4.3_consistent_hashing
+
+consistent-hashing-test:
+    @just run-test data-and-consistency/4.3_consistent_hashing
+
+consistent-hashing-down:
+    @just compose-down data-and-consistency/4.3_consistent_hashing
+
+# ── 4.4 CQRS & Event Sourcing ─────────────────────────────────
+
+cqrs-up:
+    @just compose-up data-and-consistency/4.4_cqrs_event_sourcing
+
+cqrs-test:
+    @just run-test data-and-consistency/4.4_cqrs_event_sourcing
+
+cqrs-down:
+    @just compose-down data-and-consistency/4.4_cqrs_event_sourcing
+
+# ── 4.5 Leader Election ───────────────────────────────────────
+
+leader-election-up:
+    @just compose-up data-and-consistency/4.5_leader_election
+
+leader-election-test:
+    @just run-test data-and-consistency/4.5_leader_election
+
+leader-election-down:
+    @just compose-down data-and-consistency/4.5_leader_election
+
+# ══════════════════════════════════════════════════════════════
+# 5. RESILIENCE
+# ══════════════════════════════════════════════════════════════
+
+# ── 5.1 Circuit Breaker ───────────────────────────────────────
+
+circuit-breaker-up:
+    @just compose-up resilience/5.1_circuit_breaker
+
+circuit-breaker-test:
+    @just run-test resilience/5.1_circuit_breaker
+
+circuit-breaker-down:
+    @just compose-down resilience/5.1_circuit_breaker
+
+# ── 5.2 Retry / Backoff ───────────────────────────────────────
+
+retry-backoff-up:
+    @just compose-up resilience/5.2_retry_backoff
+
+retry-backoff-test:
+    @just run-test resilience/5.2_retry_backoff
+
+retry-backoff-down:
+    @just compose-down resilience/5.2_retry_backoff
+
+# ── 5.3 Distributed Locking ───────────────────────────────────
+
+distributed-locking-up:
+    @just compose-up resilience/5.3_distributed_locking
+
+distributed-locking-test:
+    @just run-test resilience/5.3_distributed_locking
+
+distributed-locking-down:
+    @just compose-down resilience/5.3_distributed_locking
+
+# ══════════════════════════════════════════════════════════════
+# 6. ASYNC & COMMUNICATION
+# ══════════════════════════════════════════════════════════════
+
+# ── 6.1 Message Queues ────────────────────────────────────────
+
+message-queues-up:
+    @just compose-up async-and-communication/6.1_message_queues
+
+message-queues-test:
+    @just run-test async-and-communication/6.1_message_queues
+
+message-queues-down:
+    @just compose-down async-and-communication/6.1_message_queues
+
+# ── 6.2 Service Discovery ─────────────────────────────────────
+
+service-discovery-up:
+    @just compose-up async-and-communication/6.2_service_discovery
+
+service-discovery-test:
+    @just run-test async-and-communication/6.2_service_discovery
+
+service-discovery-down:
+    @just compose-down async-and-communication/6.2_service_discovery
+
+# ── 6.3 Distributed Tracing ───────────────────────────────────
+
+distributed-tracing-up:
+    @just compose-up async-and-communication/6.3_distributed_tracing
+
+distributed-tracing-test:
+    @just run-test async-and-communication/6.3_distributed_tracing
+
+distributed-tracing-down:
+    @just compose-down async-and-communication/6.3_distributed_tracing
+
+# ══════════════════════════════════════════════════════════════
+# 7. ALGORITHMS
+# ══════════════════════════════════════════════════════════════
+
+# ── 7.1 Bloom Filter ──────────────────────────────────────────
+
+bloom-filter-up:
+    @just compose-up algorithms/7.1_bloom_filter
+
+bloom-filter-test:
+    @just run-test algorithms/7.1_bloom_filter
+
+bloom-filter-down:
+    @just compose-down algorithms/7.1_bloom_filter
+
+# ── 7.2 Geohashing ────────────────────────────────────────────
+
+geohashing-up:
+    @just compose-up algorithms/7.2_geohashing
+
+geohashing-test:
+    @just run-test algorithms/7.2_geohashing
+
+geohashing-down:
+    @just compose-down algorithms/7.2_geohashing
+
+# ── 7.3 Indexing ──────────────────────────────────────────────
+
+indexing-up:
+    @just compose-up algorithms/7.3_indexing
+
+indexing-test:
+    @just run-test algorithms/7.3_indexing
+
+indexing-down:
+    @just compose-down algorithms/7.3_indexing
+
+# ══════════════════════════════════════════════════════════════
+# 8. SECURITY
+# ══════════════════════════════════════════════════════════════
+
+# ── 8.1 OAuth / JWT ───────────────────────────────────────────
+
+oauth-jwt-up:
+    @just compose-up security/8.1_oauth_jwt
+
+oauth-jwt-test:
+    @just run-test security/8.1_oauth_jwt
+
+oauth-jwt-down:
+    @just compose-down security/8.1_oauth_jwt
+
+# ══════════════════════════════════════════════════════════════
+# REAL-WORLD DESIGNS
+# ══════════════════════════════════════════════════════════════
+
+# ── SD01 URL Shortener ─────────────────────────────────────────
+
+url-shortener-up:
+    @echo "Starting SD01_url_shortener..." && cd real-world-designs/SD01_url_shortener && docker compose up --force-recreate --build -d
+
+url-shortener-test:
+    @echo "Testing SD01_url_shortener..." && bash real-world-designs/SD01_url_shortener/test.sh
+
+url-shortener-down:
+    @echo "Stopping SD01_url_shortener..." && cd real-world-designs/SD01_url_shortener && docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
+
+# ── SD02 Twitter Feed ──────────────────────────────────────────
+
+twitter-feed-up:
+    @echo "Starting SD02_twitter_feed..." && cd real-world-designs/SD02_twitter_feed && docker compose up --force-recreate --build -d
+
+twitter-feed-test:
+    @echo "Testing SD02_twitter_feed..." && bash real-world-designs/SD02_twitter_feed/test.sh
+
+twitter-feed-down:
+    @echo "Stopping SD02_twitter_feed..." && cd real-world-designs/SD02_twitter_feed && docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
+
+# ── SD03 Ride Sharing ──────────────────────────────────────────
+
+ride-sharing-up:
+    @echo "Starting SD03_ride_sharing..." && cd real-world-designs/SD03_ride_sharing && docker compose up --force-recreate --build -d
+
+ride-sharing-test:
+    @echo "Testing SD03_ride_sharing..." && bash real-world-designs/SD03_ride_sharing/test.sh
+
+ride-sharing-down:
+    @echo "Stopping SD03_ride_sharing..." && cd real-world-designs/SD03_ride_sharing && docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
+
+# ── SD04 Real-time Chat ────────────────────────────────────────
+
+realtime-chat-up:
+    @echo "Starting SD04_realtime_chat..." && cd real-world-designs/SD04_realtime_chat && docker compose up --force-recreate --build -d
+
+realtime-chat-test:
+    @echo "Testing SD04_realtime_chat..." && bash real-world-designs/SD04_realtime_chat/test.sh
+
+realtime-chat-down:
+    @echo "Stopping SD04_realtime_chat..." && cd real-world-designs/SD04_realtime_chat && docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
+
+# ── SD05 Video Streaming ───────────────────────────────────────
+
+video-streaming-up:
+    @echo "Starting SD05_video_streaming..." && cd real-world-designs/SD05_video_streaming && docker compose up --force-recreate --build -d
+
+video-streaming-test:
+    @echo "Testing SD05_video_streaming..." && bash real-world-designs/SD05_video_streaming/test.sh
+
+video-streaming-down:
+    @echo "Stopping SD05_video_streaming..." && cd real-world-designs/SD05_video_streaming && docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
+
+# ══════════════════════════════════════════════════════════════
+# DISTRIBUTED CHALLENGES (Gossip Glomers — fly.io/dist-sys)
+# Prerequisites: Java 11+, Maelstrom binary at ./maelstrom/maelstrom (download into hld dir)
+# Download: https://github.com/jepsen-io/maelstrom/releases
+# ══════════════════════════════════════════════════════════════
+
+# Build all challenge binaries
+dc-build-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Run from high-level-design/ — distributed-challenges/ is a subdirectory
+    challenges=(
+        distributed-challenges/c1_echo
+        distributed-challenges/c2_unique_ids
+        distributed-challenges/c3a_broadcast_single
+        distributed-challenges/c3b_broadcast_multi
+        distributed-challenges/c3c_broadcast_fault_tolerant
+        distributed-challenges/c3d_broadcast_efficient
+        distributed-challenges/c4_grow_only_counter
+        distributed-challenges/c5a_kafka_single
+        distributed-challenges/c5b_kafka_multi
+        distributed-challenges/c5c_kafka_efficient
+        distributed-challenges/c6a_txn_read_uncommitted
+        distributed-challenges/c6b_txn_read_committed
+    )
+    for c in "${challenges[@]}"; do
+        echo "building $c..."
+        (cd "$c" && go build -o "$(basename $c)" .)
+    done
+    echo "All challenge binaries built"
+
+# ── Individual builds ─────────────────────────────────────────
+
+dc-c1:
+    cd distributed-challenges/c1_echo && go build -o c1_echo .
+    @echo "Run: ./maelstrom/maelstrom test -w echo --bin high-level-design/distributed-challenges/c1_echo/c1_echo --node-count 1 --time-limit 10"
+
+dc-c2:
+    cd distributed-challenges/c2_unique_ids && go build -o c2_unique_ids .
+    @echo "Run: ./maelstrom/maelstrom test -w unique-ids --bin high-level-design/distributed-challenges/c2_unique_ids/c2_unique_ids --node-count 3 --availability total --nemesis partition --time-limit 30 --rate 1000"
+
+dc-c3a:
+    cd distributed-challenges/c3a_broadcast_single && go build -o c3a_broadcast_single .
+    @echo "Run: ./maelstrom/maelstrom test -w broadcast --bin high-level-design/distributed-challenges/c3a_broadcast_single/c3a_broadcast_single --node-count 1 --time-limit 20 --rate 10"
+
+dc-c3b:
+    cd distributed-challenges/c3b_broadcast_multi && go build -o c3b_broadcast_multi .
+    @echo "Run: ./maelstrom/maelstrom test -w broadcast --bin high-level-design/distributed-challenges/c3b_broadcast_multi/c3b_broadcast_multi --node-count 5 --time-limit 20 --rate 10"
+
+dc-c3c:
+    cd distributed-challenges/c3c_broadcast_fault_tolerant && go build -o c3c_broadcast_fault_tolerant .
+    @echo "Run: ./maelstrom/maelstrom test -w broadcast --bin high-level-design/distributed-challenges/c3c_broadcast_fault_tolerant/c3c_broadcast_fault_tolerant --node-count 5 --time-limit 20 --rate 10 --nemesis partition"
+
+dc-c3d:
+    cd distributed-challenges/c3d_broadcast_efficient && go build -o c3d_broadcast_efficient .
+    @echo "Run: ./maelstrom/maelstrom test -w broadcast --bin high-level-design/distributed-challenges/c3d_broadcast_efficient/c3d_broadcast_efficient --node-count 25 --time-limit 20 --rate 100 --latency 100"
+
+dc-c4:
+    cd distributed-challenges/c4_grow_only_counter && go build -o c4_grow_only_counter .
+    @echo "Run: ./maelstrom/maelstrom test -w g-counter --bin high-level-design/distributed-challenges/c4_grow_only_counter/c4_grow_only_counter --node-count 3 --time-limit 20 --rate 100 --nemesis partition"
+
+dc-c5a:
+    cd distributed-challenges/c5a_kafka_single && go build -o c5a_kafka_single .
+    @echo "Run: ./maelstrom/maelstrom test -w kafka --bin high-level-design/distributed-challenges/c5a_kafka_single/c5a_kafka_single --node-count 1 --time-limit 20 --rate 1000"
+
+dc-c5b:
+    cd distributed-challenges/c5b_kafka_multi && go build -o c5b_kafka_multi .
+    @echo "Run: ./maelstrom/maelstrom test -w kafka --bin high-level-design/distributed-challenges/c5b_kafka_multi/c5b_kafka_multi --node-count 2 --time-limit 20 --rate 1000"
+
+dc-c5c:
+    cd distributed-challenges/c5c_kafka_efficient && go build -o c5c_kafka_efficient .
+    @echo "Run: ./maelstrom/maelstrom test -w kafka --bin high-level-design/distributed-challenges/c5c_kafka_efficient/c5c_kafka_efficient --node-count 2 --time-limit 20 --rate 1000"
+
+dc-c6a:
+    cd distributed-challenges/c6a_txn_read_uncommitted && go build -o c6a_txn_read_uncommitted .
+    @echo "Run: ./maelstrom/maelstrom test -w txn-rw-register --bin high-level-design/distributed-challenges/c6a_txn_read_uncommitted/c6a_txn_read_uncommitted --node-count 2 --time-limit 20 --rate 1000 --concurrency 2n --consistency-models read-uncommitted --availability total"
+
+dc-c6b:
+    cd distributed-challenges/c6b_txn_read_committed && go build -o c6b_txn_read_committed .
+    @echo "Run: ./maelstrom/maelstrom test -w txn-rw-register --bin high-level-design/distributed-challenges/c6b_txn_read_committed/c6b_txn_read_committed --node-count 2 --time-limit 20 --rate 1000 --concurrency 2n --consistency-models read-committed --availability total"
+
+# ══════════════════════════════════════════════════════════════
+# BULK OPERATIONS
+# ══════════════════════════════════════════════════════════════
+
+# Run all HLD integration tests sequentially (up → test → down per topic)
+test-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dirs=(
+        networking-and-edge/2.1_load_balancer
+        networking-and-edge/2.2_cdn
+        networking-and-edge/2.3_dns
+        networking-and-edge/2.4_api_gateway
+        networking-and-edge/2.5_websockets_sse
+        scalability/3.1_caching
+        scalability/3.2_rate_limiting
+        scalability/3.3_db_sharding
+        scalability/3.4_db_replication
+        data-and-consistency/4.1_cap_theorem
+        data-and-consistency/4.2_sql_vs_nosql
+        data-and-consistency/4.3_consistent_hashing
+        data-and-consistency/4.4_cqrs_event_sourcing
+        data-and-consistency/4.5_leader_election
+        resilience/5.1_circuit_breaker
+        resilience/5.2_retry_backoff
+        resilience/5.3_distributed_locking
+        async-and-communication/6.1_message_queues
+        async-and-communication/6.2_service_discovery
+        async-and-communication/6.3_distributed_tracing
+        algorithms/7.1_bloom_filter
+        algorithms/7.2_geohashing
+        algorithms/7.3_indexing
+        security/8.1_oauth_jwt
+    )
+    pass=0; fail=0
+    for d in "${dirs[@]}"; do
+        echo ""
+        echo "== $d =="
+        docker compose -f "$d/docker-compose.yml" up --build -d --quiet-pull 2>/dev/null
+        sleep 3
+        if bash "$d/test.sh"; then
+            echo "PASS  $d"
+            ((pass++)) || true
+        else
+            echo "FAIL  $d"
+            ((fail++)) || true
+        fi
+        docker compose -f "$d/docker-compose.yml" down --volumes --remove-orphans 2>/dev/null || true
+    done
+    echo ""
+    echo "Results: $pass passed, $fail failed"
+
+# Stop and remove all running containers
+down-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    find . -name "docker-compose.yml" | while read f; do
+        dir=$(dirname "$f")
+        docker compose -f "$f" down --volumes --remove-orphans 2>/dev/null || true
+        echo "stopped $dir"
+    done
+    echo "All containers stopped"

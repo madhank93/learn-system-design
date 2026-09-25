@@ -1,0 +1,107 @@
+# DNS — Resolution Hierarchy
+# d2 --sketch --layout elk overview.d2 ../../svg/2.3_dns/overview.svg
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+browser: Browser {
+  shape: person
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+}
+
+resolver: Recursive Resolver\n(8.8.8.8) {
+  shape: cloud
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+}
+
+root: Root Nameserver\n(. zone) {
+  shape: cloud
+  style.fill: "#5D6D7E"
+  style.stroke: "#424949"
+  style.font-color: "#FFFFFF"
+}
+
+tld: .com TLD Nameserver {
+  shape: cloud
+  style.fill: "#D35400"
+  style.stroke: "#A04000"
+  style.font-color: "#FFFFFF"
+}
+
+auth: Authoritative NS\n(ns1.example.com) {
+  shape: cloud
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+server: App Server\n(93.184.216.34) {
+  shape: hexagon
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+browser -> resolver: resolve example.com {
+  style.stroke: "#3498DB"
+}
+resolver -> root: query (cache miss) {
+  style.stroke-dash: 5
+}
+root -> resolver: .com NS servers
+resolver -> tld: query
+tld -> resolver: example.com NS records
+resolver -> auth: query
+auth -> resolver: A: 93.184.216.34 TTL=3600
+resolver -> browser: IP address (cached)
+browser -> server: TCP connect
+
+scenarios: {
+  cache_hit: {
+    resolver: Recursive Resolver\n✓ Cache HIT (TTL=287s) {
+      style.fill: "#27AE60"
+      style.stroke: "#1E8449"
+      style.font-color: "#FFFFFF"
+    }
+    root: Root Nameserver {
+      style.opacity: 0.2
+    }
+    tld: .com TLD Nameserver {
+      style.opacity: 0.2
+    }
+    auth: Authoritative NS {
+      style.opacity: 0.2
+    }
+    resolver -> browser: IP (cached, ~1ms) {
+      style.stroke: "#27AE60"
+      style.stroke-width: 3
+      style.animated: true
+    }
+  }
+
+  ttl_expired: {
+    resolver: Recursive Resolver\n⚠ TTL Expired — re-query {
+      style.fill: "#D35400"
+      style.stroke: "#A04000"
+      style.font-color: "#FFFFFF"
+    }
+    resolver -> root: re-query {
+      style.stroke: "#E67E22"
+      style.stroke-width: 2
+      style.animated: true
+    }
+  }
+}

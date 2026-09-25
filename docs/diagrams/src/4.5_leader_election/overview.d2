@@ -1,0 +1,78 @@
+# Leader Election — Raft steady state
+# One idea: the leader heartbeats followers; silence triggers elections.
+
+vars: { d2-config: { layout-engine: elk } }
+direction: right
+
+style: {
+  fill: "#FBFAF7"
+  stroke: "#D5D0C8"
+}
+
+n1: "N1 — LEADER\nterm 1" {
+  shape: hexagon
+  style.fill: "#3498DB"
+  style.stroke: "#2471A3"
+  style.font-color: "#FFFFFF"
+  style.bold: true
+}
+
+n2: N2 {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+n3: N3 {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+n4: N4 {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+n5: N5 {
+  style.fill: "#27AE60"
+  style.stroke: "#1E8449"
+  style.font-color: "#FFFFFF"
+}
+
+n1 -> n2: heartbeat { style.stroke-dash: 5 }
+n1 -> n3: heartbeat { style.stroke-dash: 5 }
+n1 -> n4: heartbeat { style.stroke-dash: 5 }
+n1 -> n5: heartbeat { style.stroke-dash: 5 }
+
+scenarios: {
+  leader_crash: {
+    n1: "N1\n⚠ CRASHED" {
+      style.fill: "#E74C3C"
+      style.stroke: "#C0392B"
+      style.bold: false
+    }
+    n3: "N3 — NEW LEADER\nterm 2" {
+      shape: hexagon
+      style.fill: "#3498DB"
+      style.stroke: "#2471A3"
+      style.bold: true
+    }
+    n3 -> n2: heartbeat {
+      style.stroke: "#27AE60"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+    n3 -> n4: heartbeat {
+      style.stroke: "#27AE60"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+    n3 -> n5: heartbeat {
+      style.stroke: "#27AE60"
+      style.stroke-dash: 5
+      style.animated: true
+    }
+  }
+}
