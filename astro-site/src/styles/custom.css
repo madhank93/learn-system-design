@@ -317,3 +317,10 @@
   100% { box-shadow: 0 0 0 6px transparent; }
 }
 .lsd-card-flash { animation: lsd-flash .6s ease-out; }
+
+/* Starlight's hero reserves a 4fr image column even when no image is set. */
+@media (min-width: 50rem) {
+  main .hero:not(:has(> img, > .hero-html)) {
+    grid-template-columns: 1fr;
+  }
+}
