@@ -37,6 +37,12 @@ The primary writes every change to an append-only log — the WAL (write-ahead l
 
 <ReplicationFlow client:only="react" />
 
+## Break it
+
+<BreakIt path="scalability/3.4_db_replication" recipe="db-replication" />
+
+## Under the hood
+
 Three topologies cover almost every production system:
 
 <Figure caption="Three topologies: single-leader (one writer), multi-leader (a writer per region), and leaderless (quorum reads/writes).">
@@ -65,12 +71,6 @@ flowchart LR
 </Figure>
 
 This page focuses on single-leader — the default for PostgreSQL and MySQL.
-
-## Break it
-
-<BreakIt path="scalability/3.4_db_replication" recipe="db-replication" />
-
-## Under the hood
 
 **Step through a write, the stream, and a failover:**
 

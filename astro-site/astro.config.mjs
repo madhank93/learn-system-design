@@ -9,7 +9,7 @@ export default defineConfig({
     // Render ```mermaid fences to inline SVG at build time (headless Chromium via
     // playwright) so static diagrams ship zero client JS. Interactive islands
     // (SystemDiagram, sims) stay as React components.
-    rehypePlugins: [[rehypeMermaid, { strategy: 'inline-svg', mermaidConfig: { theme: 'dark' } }]],
+    rehypePlugins: [[rehypeMermaid, { strategy: 'inline-svg', mermaidConfig: { theme: 'dark', themeVariables: { edgeLabelBackground: '#24272f' } } }]],
   },
   integrations: [
     starlight({

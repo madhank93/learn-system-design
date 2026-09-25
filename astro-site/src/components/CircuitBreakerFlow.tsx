@@ -17,6 +17,7 @@ const HEIGHT = 320;
 const STATE_COLOR: Record<CBState, string> = { CLOSED: '#2ECC71', OPEN: '#E74C3C', HALF_OPEN: '#E67E22' };
 const GREEN = '#2ECC71';
 const RED = '#E74C3C';
+const RED_TEXT = '#ff7b72'; // RED reads below 4.5:1 as small text on the panel
 const ORANGE = '#E67E22';
 const BLUE = '#4F9DF7';
 
@@ -110,8 +111,8 @@ export default function CircuitBreakerFlow() {
     <div className="lsd-diagram not-content">
       <p className="lsd-hint">
         Each request calls a flaky downstream (<strong style={{ color: GREEN }}>ok</strong> /{' '}
-        <strong style={{ color: RED }}>fail</strong>). <strong>Push the failure rate up</strong>: once failures
-        cross 50% the breaker trips <strong style={{ color: RED }}>OPEN</strong> and fails fast (orange) — sending
+        <strong style={{ color: RED_TEXT }}>fail</strong>). <strong>Push the failure rate up</strong>: once failures
+        cross 50% the breaker trips <strong style={{ color: RED_TEXT }}>OPEN</strong> and fails fast (orange) — sending
         zero load downstream — then probes <strong style={{ color: ORANGE }}>HALF_OPEN</strong> after a cooldown.
       </p>
 

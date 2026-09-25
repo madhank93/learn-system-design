@@ -188,7 +188,21 @@ Monitor state-transition events as a first-class operational metric. A breaker t
 
 ## This implementation
 
-The Go service wraps a downstream call in a breaker with a count-based window, a trip threshold, and a cooldown timer — the same state machine the simulations above model.
+A Go proxy wraps calls to a flaky backend. Three proxy instances run the same breaker with different settings (`THRESHOLD` 2 / 3 / 5 failures, `TIMEOUT_SEC` 3 / 5 / 10) so you can compare how fast each trips and recovers.
+
+The breaker is simpler than the sliding window in the simulation: it counts **consecutive** failures, and any success resets the count.
+
+```go
+cb.failures++
+if cb.state == stateHalfOpen || cb.failures >= cb.threshold {
+    log.Printf("[CB] → OPEN (failures=%d)", cb.failures)
+    cb.state = stateOpen
+    cb.openedAt = time.Now()
+}
+```
+
+- After `TIMEOUT_SEC` in OPEN, the next request moves it to HALF_OPEN. Every request is let through while HALF_OPEN, not just one probe: the first success closes the breaker, the first failure re-opens it.
+- A consecutive-failure counter never trips on a dependency that fails 50% of the time in alternation. That's why production libraries (Resilience4j, Polly) use a failure-rate window, like the simulation above.
 
 ## Further reading
 
